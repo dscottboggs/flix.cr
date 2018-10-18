@@ -1,0 +1,17 @@
+name: flix
+version: 0.1.0
+
+authors:
+  - D. Scott Boggs <scott@tams.tech>
+
+targets:
+  flix:
+    main: src/flix.cr
+
+crystal: 0.26.1
+
+dependencies:
+  kemal:
+    github: kemalcr/kemal
+
+license: MIT
