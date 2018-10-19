@@ -4,7 +4,7 @@ module Flix
     property config_location
     property debug = true
     property webroot : String = ENV["flix_webroot"]? || File.join(
-      File.dirname(Dir.current), "flix_webui"
+      File.dirname(Dir.current), "flix_webui", "build"
     )
     setter dirs
     @logger : Logger?

@@ -1,7 +1,9 @@
 require "kemal"
+require "./route_helpers"
 
 module Flix
   extend self
+
   def serve_up
     get "/ping" do
       "pong"
@@ -11,33 +13,10 @@ module Flix
       config.dirs.to_json
     end
 
-    get "/img/:id" do |env|
-      id = env.params.url["id"]
-      photo = Scanner::FileMetadata.all_photos[id]?
-      if photo.nil?
-        video = Scanner::FileMetadata.all_videos[id]?
-        if video.nil?
-          render_404
-          next
-        else
-          photo = video.thumbnail
-        end
-      end
-      if photo.nil?
-        render_404
-      else
-        send_file env, photo.not_nil!.path
-      end
-    end
-
-    get "/vid/:id" do |env|
-      video = Scanner::FileMetadata.all_videos[env.params.url["id"]]?
-      if video.nil?
-        render_404
-      else
-        send_file env, video.not_nil!.path
-      end
-    end
+    get "/img/:id" { |env| serve_image env }
+    get "/img" { |env| serve_image env }
+    get "/vid/:id" { |env| serve_video env }
+    get "/vid" { |env| serve_video env }
 
     get "/" { |env| env.redirect "/index.html" }
 

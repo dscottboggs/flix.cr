@@ -27,7 +27,7 @@ module Flix
       hash_size = digest.size/2
       hash_value = Bytes.new(hash_size)
       hash_size.times do |i|
-        hash_value[i] = digest[i] ^ digest[i+hash_size]
+        hash_value[i] = digest[i] ^ digest[i + hash_size]
       end
       Base64.urlsafe_encode hash_value
     end

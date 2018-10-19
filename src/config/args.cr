@@ -17,7 +17,7 @@ module Flix
         dirs << dir
       end
       parser.on "-c LOCATION", "--config=LOCATION", "set the config file location" do |loc|
-        config_location = loc  unless loc.empty?
+        config_location = loc unless loc.empty?
       end
       parser.on "-p PORT", "--port=PORT", port_help do |p_val|
         begin
