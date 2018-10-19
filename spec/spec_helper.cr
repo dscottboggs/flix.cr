@@ -8,7 +8,7 @@ URLS = {
   video_two: "https://s3.amazonaws.com/x265.org/video/BigBuckBunny_2000hevc.mp4",
 }
 
-TEST_DATA_DIR = File.join Dir.current, "test_data"
+TEST_DATA_DIR  = File.join Dir.current, "test_data"
 TEST_MEDIA_DIR = File.join TEST_DATA_DIR, "media"
 
 TEST_FILES = {

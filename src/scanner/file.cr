@@ -1,3 +1,4 @@
+require "digest"
 require "../errors/unknown_filetype"
 
 module Scanner
@@ -13,10 +14,14 @@ module Scanner
     elsif mime_text.starts_with? "image/png"
       return :png
     elsif (mime_text.starts_with?("application/octet-stream") &&
-           path.ends_with?(".mp4"))
+          path.ends_with?(".mp4"))
       return :mp4
     else
       raise Scanner::UnknownFiletype.new path, mime_text
     end
+  end
+
+  def hash(filepath : String)
+    Base64.urlsafe_encode(Digest::MD5.digest(filepath).to_slice)
   end
 end

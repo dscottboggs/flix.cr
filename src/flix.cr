@@ -1,5 +1,4 @@
 # TODO: Write documentation for `Flix`
-require "./core_ext/**"
 require "./scanner/*"
 
 module Flix

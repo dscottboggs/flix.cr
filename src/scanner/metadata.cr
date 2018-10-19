@@ -6,24 +6,35 @@ module Scanner
     @@all_photos = Hash(String, PhotoFile).new
     property path : String
     @name : String?
+    @hash : String?
+
+    def initialize(@path : String,
+                   @stat : File::Info? = nil,
+                   @thumbnail : PhotoFile? = nil)
+      @name = FileMetadata.get_title_from @path
+    end
 
     def name=(@name : String); end
 
     def name : String
       if @name.nil?
-        @name = self.get_title_from path
+        @name = FileMetadata.get_title_from path
       else
-        @name
+        @name.not_nil!
+      end
+    end
+
+    def hash : String
+      if @hash.nil?
+        @hash = Scanner.hash @path
+      else
+        @hash.not_nil!
       end
     end
 
     @stat : File::Info?
     property thumbnail : PhotoFile?
     property parent : MediaDirectory? = nil
-
-    def initialize(@path : String, @stat : File::Info? = nil)
-      @name = self.get_title_from @path
-    end
 
     def self.from_file_path?(filepath : String) : self | Nil
       info = File.info? filepath
@@ -49,32 +60,49 @@ module Scanner
       end
     end
 
-    def self.get_title_from(filepath : String)
+    def self.get_title_from(filepath : String) : String
       underscores, dots = 0_u32, 0_u32
-      index = filepath.rindex '.'
-      if index && filepath.size - index <= 5
-        filepath = filepath[0..index - 1]
+      filename = File.basename filepath
+      index = filename.rindex '.'
+      if index && filename.size - index <= 5
+        filename = filename[0..index - 1]
       end
-      filepath.each_char do |char|
-        return filepath if char == ' '
+      filename.each_char do |char|
+        return filename if char == ' '
         dots += 1 if char == '.'
         underscores += 1 if char == '_'
       end
       if underscores > 0 || dots > 0
-        return filepath
+        return filename
           .gsub('_', ' ')
           .gsub(/\s+/, " ")
           .strip if underscores > dots
-        return filepath
+        return filename
           .gsub('.', ' ')
           .gsub(/\s+/, " ")
           .strip
       end
-      filepath = filepath.gsub '-', " -"
+      filename = filename.gsub '-', " -"
       subs = Hash(Char, Char | String).new
       ('A'..'Z').each { |l| subs[l] = " " + l }
 
-      filepath.gsub(subs).strip
+      filename.gsub(subs).strip
+    end
+
+    def self.<<(video : VideoFile)
+      @@all_videos[video.hash] = video
+    end
+
+    def self.<<(photo : PhotoFile)
+      @@all_photos[photo.hash] = photo
+    end
+
+    def all_videos
+      @@all_videos
+    end
+
+    def all_photos
+      @@all_photos
     end
   end
 end
