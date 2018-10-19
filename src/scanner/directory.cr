@@ -21,7 +21,7 @@ module Flix
           end
           unless (c = @children).nil?
             c.each do |child|
-              CONFIG.logger.debug "adding child #{child.name} to @children_hash for #{name}"
+              Flix.config.logger.debug "adding child #{child.name} to @children_hash for #{name}"
               @children_hash.not_nil![child.hash] = child
             end
           end
@@ -30,7 +30,7 @@ module Flix
       end
 
       def each_child
-        unless @children_hash.nil?
+        unless children.nil?
           @children_hash.not_nil!.each { |k, v| yield k, v }
         end
       end
@@ -75,15 +75,25 @@ module Flix
       end
 
       def to_json(builder : JSON::Builder)
-        builder.document do
-          builder.object do
-            builder.field "title", name
-            builder.field "thumbnail", thumbnail.hash
-            each_child do |hash, child|
-              builder.field hash, child.name
-            end
+        already_started? = false
+        begin
+          builder.start_document
+        rescue JSON::Error
+          already_started? = true
+        end
+        builder.object do
+          builder.field "title", name
+          builder.field "thumbnail", thumbnail.hash
+          children_count = 0
+          each_child do |hash, child|
+            builder.field hash, child.name
+            children_count += 1
+          end
+          if children_count == 0
+            Flix.config.logger.warn "got no children from #{self.inspect}"
           end
         end
+        builder.end_document unless already_started?
       end
     end
   end

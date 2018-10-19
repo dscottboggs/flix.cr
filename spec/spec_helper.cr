@@ -1,3 +1,5 @@
+ENV["FLIX_DEBUG"] = "yes"
+
 require "spec"
 require "tempfile"
 require "http"
@@ -8,11 +10,18 @@ URLS = {
   video_two: "https://s3.amazonaws.com/x265.org/video/BigBuckBunny_2000hevc.mp4",
 }
 
-TEST_DATA_DIR  = File.join Dir.current, "test_data"
-TEST_MEDIA_DIR = File.join TEST_DATA_DIR, "media"
+TEST_DATA_DIR   = File.join Dir.current, "test_data"
+TEST_MEDIA_DIR  = File.join TEST_DATA_DIR, "media"
+TEST_CONFIG_DIR = File.join TEST_DATA_DIR, "config"
 
 TEST_FILES = {
-  video_one: File.open(File.join TEST_MEDIA_DIR, "TestVideo.mp4"),
-  video_two: File.open(File.join TEST_MEDIA_DIR, "Test.Video.-.2.mp4"),
-  image_one: File.open(File.join TEST_MEDIA_DIR, "TestVideo.jpg"),
+  video_one: File.open(File.join(TEST_MEDIA_DIR, "TestVideo.mp4")),
+  video_two: File.open(File.join(TEST_MEDIA_DIR, "Test.Video.-.2.mp4")),
+  image_one: File.open(File.join(TEST_MEDIA_DIR, "TestVideo.jpg")),
 }
+
+Flix.config = Flix::Configuration.new(
+  config_location: TEST_CONFIG_DIR,
+  dirs: [TEST_MEDIA_DIR],
+  port: 21222,
+)

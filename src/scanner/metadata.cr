@@ -98,11 +98,11 @@ module Flix
         @@all_photos[photo.hash] = photo
       end
 
-      def all_videos
+      def self.all_videos
         @@all_videos
       end
 
-      def all_photos
+      def self.all_photos
         @@all_photos
       end
     end
