@@ -29,6 +29,12 @@ module Scanner
       @children_hash
     end
 
+    def each_child
+      unless @children_hash.nil?
+        @children_hash.not_nil!.each { |k, v| yield k, v }
+      end
+    end
+
     def self.from_file_path?(filepath : String) : MediaDirectory?
       children = Array(FileMetadata).new
       thumb : PhotoFile? = nil
@@ -60,6 +66,24 @@ module Scanner
       out_dir.children = children
       out_dir.thumbnail = thumb unless thumb.nil?
       out_dir
+    end
+
+    def to_json
+      buf = String::Builder.new
+      to_json(JSON::Builder.new(buf))
+      buf.to_s
+    end
+
+    def to_json(builder : JSON::Builder)
+      builder.document do
+        builder.object do
+          builder.field "title", name
+          builder.field "thumbnail", thumbnail.hash
+          each_child do |hash, child|
+            builder.field hash, child.name
+          end
+        end
+      end
     end
   end
 end
