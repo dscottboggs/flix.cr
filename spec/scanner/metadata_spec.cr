@@ -1,4 +1,4 @@
-describe Scanner::FileMetadata do
+describe Flix::Scanner::FileMetadata do
   describe ".get_title_from" do
     test_values = {
       "TestString"                                            => "Test String",
@@ -12,7 +12,7 @@ describe Scanner::FileMetadata do
     }
     test_values.each do |filename, title|
       it "returns #{title} for #{filename}" do
-        Scanner::FileMetadata.get_title_from(filename).should eq title
+        Flix::Scanner::FileMetadata.get_title_from(filename).should eq title
       end
     end
   end

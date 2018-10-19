@@ -1,4 +1,5 @@
 # TODO: Write documentation for `Flix`
+require "./config/*"
 require "./scanner/*"
 
 module Flix
