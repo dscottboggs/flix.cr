@@ -21,6 +21,7 @@ module Flix
     @@config = conf
   end
 
+  # relevant function
   def logger
     config.logger
   end

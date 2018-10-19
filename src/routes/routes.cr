@@ -50,7 +50,7 @@ module Flix
       Kemal.run
     rescue e : Errno
       if e.errno == Errno::EADDRINUSE
-        Flix.config.logger.error "port #{Kemal.config.port} is in use.\n"
+        Flix.logger.error "port #{Kemal.config.port} is in use.\n"
       end
       raise e
     end

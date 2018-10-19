@@ -23,13 +23,13 @@ module Flix
         begin
           port = p_val.to_u16 unless p_val.empty?
         rescue e : ArgumentError
-          Flix.config.logger.error "#{port.inspect} (type #{typeof(port)}) is not a valid UInt16"
+          Flix.logger.error "#{port.inspect} (type #{typeof(port)}) is not a valid UInt16"
           raise e
         end
       end
       parser.invalid_option do |flag|
-        Flix.config.logger.error "ERROR: #{flag} is not a valid option."
-        Flix.config.logger.error parser
+        Flix.logger.error "ERROR: #{flag} is not a valid option."
+        Flix.logger.error parser
         exit 64 # Usage exit code
       end
     end

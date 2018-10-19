@@ -21,7 +21,7 @@ module Flix
           end
           unless (c = @children).nil?
             c.each do |child|
-              Flix.config.logger.debug "adding child #{child.name} to @children_hash for #{name}"
+              Flix.logger.debug "adding child #{child.name} to @children_hash for #{name}"
               @children_hash.not_nil![child.hash] = child
             end
           end
@@ -90,7 +90,7 @@ module Flix
             children_count += 1
           end
           if children_count == 0
-            Flix.config.logger.warn "got no children from #{self.inspect}"
+            Flix.logger.warn "got no children from #{self.inspect}"
           end
         end
         builder.end_document unless already_started?
