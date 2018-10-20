@@ -4,6 +4,7 @@ module Flix
   module Scanner
     class MediaDirectory < FileMetadata
       @children_hash : Hash(String, FileMetadata)?
+      @json_cache : String?
 
       def initialize(@path : String,
                      @children : Array(FileMetadata)? = nil,
@@ -29,71 +30,61 @@ module Flix
         @children_hash
       end
 
+      def <<(child : FileMetadata?)
+        if @children.nil?
+          @children = Array(FileMetadata).new
+        end
+        @children.not_nil! << child
+        if @children_hash.nil?
+          @children_hash = Hash(String, FileMetadata).new
+        end
+        @children_hash.not_nil![child.hash] = child
+      end
+
       def each_child
         unless children.nil?
           @children_hash.not_nil!.each { |k, v| yield k, v }
         end
       end
 
-      def self.from_file_path?(filepath : String) : MediaDirectory?
-        children = Array(FileMetadata).new
-        thumb : PhotoFile? = nil
-        out_dir = MediaDirectory.new path: filepath
-        Dir.open(filepath) do |dir|
-          dir.each_child do |file|
-            fullpath = File.join(filepath, file)
-            info = File.info fullpath
-            if info.directory?
-              child_dir = self.from_file_path? fullpath
-              children << child_dir unless child_dir.nil?
-            else
-              filetype = Scanner.mime_type fullpath
-              if {:mp4, :webm}.includes? filetype
-                vid = VideoFile.from_file_path? fullpath
-                next if vid.nil?
-                vid.parent = out_dir
-                children << vid
-                FileMetadata << vid
-              elsif {:png, :jpeg}.includes? filetype
-                thumb = PhotoFile.from_file_path? fullpath
-                next if thumb.nil?
-                thumb.not_nil!.parent = out_dir
-                FileMetadata << thumb
-              end
-            end
-          end
-        end
-        out_dir.children = children
-        out_dir.thumbnail = thumb unless thumb.nil?
-        out_dir
-      end
-
       def to_json
+        return @json_cache unless @json_cache.nil?
         buf = String::Builder.new
-        to_json(JSON::Builder.new(buf))
-        buf.to_s
+        builder = JSON::Builder.new(buf)
+        builder.start_document unless builder.state == JSON::Builder::DocumentStartState
+        to_json(builder)
+        builder.end_document unless already_started?
+        @json_cache = buf.to_s
       end
 
       def to_json(builder : JSON::Builder)
-        already_started? = false
-        begin
-          builder.start_document
-        rescue JSON::Error
-          already_started? = true
-        end
         builder.object do
+          Flix.logger.debug "Adding title #{name.inspect} and thumbail #{thumbnail.inspect} to json"
           builder.field "title", name
-          builder.field "thumbnail", thumbnail.hash
+          unless thumbnail.nil?
+            builder.field "thumbnail", thumbnail.hash
+          end
           children_count = 0
           each_child do |hash, child|
-            builder.field hash, child.name
-            children_count += 1
+            if child.is_a? MediaDirectory
+              # debugger
+              builder.field child.hash do
+                child.as(MediaDirectory).to_json(builder)
+              end
+            else
+              Flix.logger.debug "Added child #{child.name} to directory #{name}'s json"
+              builder.field hash, child.name
+              children_count += 1
+            end
           end
           if children_count == 0
             Flix.logger.warn "got no children from #{self.inspect}"
           end
         end
-        builder.end_document unless already_started?
+      end
+
+      def is_dir?
+        true
       end
     end
   end

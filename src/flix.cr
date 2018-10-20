@@ -8,6 +8,7 @@ module Flix
   VERSION = "0.1.0"
 
   @@config : Configuration?
+  @@preconfig_logger : Logger? = Logger.new STDOUT, level: Logger::DEBUG
 
   def config
     if @@config.nil?
@@ -23,7 +24,12 @@ module Flix
 
   # relevant function
   def logger
-    config.logger
+    if @@config.nil?
+      @@preconfig_logger.not_nil!
+    else
+      @@preconfig_logger = nil
+      config.logger
+    end
   end
 
   serve_up unless ENV["FLIX_DEBUG"]?

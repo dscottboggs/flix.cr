@@ -2,7 +2,7 @@ module Flix
   class Configuration
     property port
     property config_location
-    property debug = true
+    property debug = !ENV["flix_debug"]?.nil?
     property webroot : String = ENV["flix_webroot"]? || File.join(
       File.dirname(Dir.current), "flix_webui", "build"
     )
@@ -16,11 +16,15 @@ module Flix
       if @dirs.empty?
         @dirs = default_dirs
       end
-      # this must be the same as dirs=(), but @initialized_dirs needs to be
+      # this must be the same as #dirs=, but @initialized_dirs needs to be
       # initialized directly from within the constructor. Watch for changes!
-      @initialized_dirs = @dirs.map do |dir|
-        Scanner::MediaDirectory.from_file_path? dir
-      end.reject! &.nil?
+      @initialized_dirs = Array(Scanner::MediaDirectory).new
+      @dirs.each do |dir|
+        if (i_dir = Scanner::FileMetadata.from_file_path? dir) && i_dir.not_nil!.is_dir?
+          @initialized_dirs << i_dir.not_nil!.as(Scanner::MediaDirectory)
+        end
+      end
+      Flix::Scanner::FileMetadata.associate_thumbnails
     end
 
     def logger : Logger
@@ -32,13 +36,18 @@ module Flix
     end
 
     def dirs : Array(Scanner::MediaDirectory)
-      @initialized_dirs
+      @initialized_dirs.reject &.nil?
     end
 
     def dirs=(dirs : Array(String))
-      @initialized_dirs = dirs.map do |dir|
-        Scanner::MediaDirectory.from_file_path? dir
-      end.reject! &.nil?
+      @initialized_dirs = Array(Scanner::MediaDirectory).new
+      @dirs.each do |dir|
+        if (i_dir = Scanner::FileMetadata.from_file_path? dir) && i_dir.not_nil!.is_dir?
+          @initialized_dirs << i_dir.not_nil!.as(Scanner::MediaDirectory)
+        end
+      end
+      Flix::Scanner::FileMetadata.associate_thumbnails
+      @initialized_dirs
     end
 
     # The default directory of media to serve up.
