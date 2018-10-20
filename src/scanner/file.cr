@@ -1,3 +1,6 @@
+# Flix -- A media server in the Crystal Language with Kemal.cr
+# Copyright (C) 2018 D. Scott Boggs
+# See LICENSE.md for the terms of the AGPL under which this software can be used.
 require "digest"
 require "../errors/unknown_filetype"
 
@@ -69,7 +72,7 @@ module Flix
       String.build do |s|
         filepath.each_char do |char|
           if char == '"'
-            s << '\\'
+            s << '\'
           end
           s << char
         end

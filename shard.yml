@@ -16,4 +16,4 @@ dependencies:
   parallel:
     github: RX14/parallel.cr
 
-license: MIT
+license: AGPL
