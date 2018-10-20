@@ -8,6 +8,9 @@ Serves videos from one or more directories with a ReactJS web app or over a simp
 Crystal allows compiling to a single self-contained executable. I'll drop one of
 those in the "releases" section of the repo.
 
+Please note that statically-linked crystal binaries still require the presence
+of glibc.
+
 #### From source
 Run the following commands in the directory you wish to download the source to.
 ```sh
