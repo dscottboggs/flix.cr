@@ -72,7 +72,7 @@ module Flix
       String.build do |s|
         filepath.each_char do |char|
           if char == '"'
-            s << '\'
+            s << '\\'
           end
           s << char
         end

@@ -50,14 +50,14 @@ module Flix
         end
       end
 
-      def to_json
-        return @json_cache unless @json_cache.nil?
+      def to_json : String
+        return @json_cache.not_nil! unless @json_cache.nil?
         buf = String::Builder.new
         builder = JSON::Builder.new(buf)
-        builder.start_document unless builder.state == JSON::Builder::DocumentStartState
+        builder.start_document
         to_json(builder)
-        builder.end_document unless already_started?
-        @json_cache = buf.to_s
+        builder.end_document
+        (@json_cache = buf.to_s).not_nil!
       end
 
       def to_json(builder : JSON::Builder)
