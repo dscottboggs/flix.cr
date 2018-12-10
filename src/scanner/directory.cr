@@ -11,7 +11,8 @@ module Flix
 
       def initialize(@path : String,
                      @children : Array(FileMetadata)? = nil,
-                     @thumbnail : PhotoFile? = nil)
+                     @thumbnail : PhotoFile? = nil,
+					 @stat : Crystal::System::FileInfo? = nil)
         @name = FileMetadata.get_title_from @path
       end
 

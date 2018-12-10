@@ -13,7 +13,10 @@ crystal: 0.26.1
 dependencies:
   kemal:
     github: kemalcr/kemal
-  parallel:
-    github: RX14/parallel.cr
+  spec-kemal:
+    github: kemalcr/spec-kemal
+    branch: master
+  magic:
+    github: dscottboggs/magic.cr
 
 license: AGPL

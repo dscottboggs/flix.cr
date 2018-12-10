@@ -5,7 +5,7 @@
 require "logger"
 require "./config/*"
 require "./scanner/*"
-require "./routes/routes"
+require "./routes"
 
 module Flix
   VERSION = "0.1.0"
@@ -21,8 +21,7 @@ module Flix
     end
   end
 
-  def config=(conf : Configuration)
-    @@config = conf
+  def config=(@@config)
   end
 
   # relevant function
@@ -35,5 +34,5 @@ module Flix
     end
   end
 
-  serve_up unless ENV["FLIX_DEBUG"]?
+  serve_up # unless ENV["FLIX_DEBUG"]?
 end

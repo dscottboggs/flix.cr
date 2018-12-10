@@ -1,27 +1,11 @@
-# Flix -- A media server in the Crystal Language with Kemal.cr
-# Copyright (C) 2018 D. Scott Boggs
-# See LICENSE.md for the terms of the AGPL under which this software can be used.
-require "kemal"
-
+require "./handler"
 module Flix
-  extend self
+class ImageHandler < Flix::Handler
+  only ["/img", "/img/:id"]
 
-  def serve_video(env)
-    id = env.params.url["id"]? || env.params.query["id"]?
-    if id.nil?
-      render_404
-      return
-    end
-    video = Scanner::FileMetadata.all_videos[id]?
-    if video.nil?
-      render_404
-      return
-    else
-      send_file env, video.not_nil!.path
-    end
-  end
+  def call(env)
+    skip_other_routes
 
-  def serve_image(env)
     id = env.params.url["id"]? || env.params.query["id"]?
     if id.nil?
       render_404
@@ -55,4 +39,5 @@ module Flix
       end
     end
   end
+end
 end

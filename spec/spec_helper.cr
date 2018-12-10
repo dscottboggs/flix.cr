@@ -1,7 +1,6 @@
-ENV["FLIX_DEBUG"] = "yes"
+# ENV["FLIX_DEBUG"] = "yes"
 
 require "spec"
-require "tempfile"
 require "http"
 require "../src/flix"
 
@@ -14,10 +13,14 @@ TEST_DATA_DIR   = File.join Dir.current, "test_data"
 TEST_MEDIA_DIR  = File.join TEST_DATA_DIR, "media"
 TEST_CONFIG_DIR = File.join TEST_DATA_DIR, "config"
 
+VIDEO_ONE_PATH = File.join(TEST_MEDIA_DIR, "TestVideo.mp4")
+VIDEO_TWO_PATH = File.join(TEST_MEDIA_DIR, "Test.Video.-.2.mp4")
+IMAGE_ONE_PATH = File.join(TEST_MEDIA_DIR, "TestVideo.jpg")
+
 TEST_FILES = {
-  video_one: File.open(File.join(TEST_MEDIA_DIR, "TestVideo.mp4")),
-  video_two: File.open(File.join(TEST_MEDIA_DIR, "Test.Video.-.2.mp4")),
-  image_one: File.open(File.join(TEST_MEDIA_DIR, "TestVideo.jpg")),
+  video_one: File.open(VIDEO_ONE_PATH),
+  video_two: File.open(VIDEO_TWO_PATH),
+  image_one: File.open(IMAGE_ONE_PATH),
 }
 
 Flix.config = Flix::Configuration.new(

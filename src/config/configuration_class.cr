@@ -12,6 +12,13 @@ module Flix
     setter dirs
     @logger : Logger?
     @initialized_dirs : Array(Scanner::MediaDirectory)
+    setter processes : Int32?
+
+    def processes : Int
+      @processes ||= ENV["flix_processes"]?.try &.to_i || 1
+    rescue e : ArgumentError
+      @processes = 1
+    end
 
     def initialize(@config_location : String,
                    @port : UInt16,
@@ -32,7 +39,7 @@ module Flix
 
     def logger : Logger
       if @logger.nil?
-        @logger = Logger.new STDOUT, level: debug ? Logger::DEBUG : Logger::WARN
+        @logger = Logger.new STDOUT, level:  Logger::WARN
       else
         @logger.not_nil!
       end
