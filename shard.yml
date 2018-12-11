@@ -10,13 +10,22 @@ targets:
 
 crystal: 0.26.1
 
-dependencies:
-  kemal:
-    github: kemalcr/kemal
+development_dependencies:
   spec-kemal:
     github: kemalcr/spec-kemal
-    branch: master
+
+dependencies:
+  # the API router
+  kemal:
+    github: kemalcr/kemal
+  # bindings to LibMagic (a.k.a. the `file(1)` command); gets filetypes
   magic:
     github: dscottboggs/magic.cr
+  # authentication middleware
+  kemal-auth-token:
+    github: dscottboggs/kemal-auth-token
+  # for hashing passwords
+  scrypt:
+    github: ysbaddaden/scrypt-crystal
 
 license: AGPL

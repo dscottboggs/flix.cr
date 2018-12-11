@@ -1,4 +1,5 @@
 require "./handler"
+
 class Flix::PingHandler < Flix::Handler
   only ["/ping"]
 

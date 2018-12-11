@@ -4,23 +4,35 @@ shards:
     github: crystal-loot/exception_page
     version: 0.1.1
 
+  jwt:
+    github: crystal-community/jwt
+    version: 0.4.0
+
   kemal:
     github: kemalcr/kemal
     version: 0.25.1
+
+  kemal-auth-token:
+    github: dscottboggs/kemal-auth-token
+    commit: 08f10e628e717acda6b97ec861b577c57dc78840
 
   kilt:
     github: jeromegn/kilt
     version: 0.4.0
 
-  magic.cr:
+  magic:
     github: dscottboggs/magic.cr
-    commit: edb8d9eeefb0256988895f2011144fefea086448
+    commit: 222834bca5ef65073a2b214dbfb8ccd710c958eb
 
   radix:
     github: luislavena/radix
     version: 0.3.8
 
+  scrypt:
+    github: ysbaddaden/scrypt-crystal
+    version: 0.2.2
+
   spec-kemal:
     github: kemalcr/spec-kemal
-    commit: 64b89c719234ceb92c0a14762dce3afc6257fffc
+    version: 0.5.0
 

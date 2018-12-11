@@ -1,0 +1,20 @@
+version: '3'
+services:
+  flix.cr:
+    build: .
+    networks:
+      - web
+    volumes:
+      - /home/scott/Videos/Public:/media:ro
+    labels:
+      traefik.docker.network: web
+      traefik.enable: "true"
+      traefik.domain: demo.flix.tams.tech
+      traefik.madscientists_blog.frontend.rule: Host:demo.flix.tams.tech,demo.flix.madscientists.co
+      traefik.madscientists_blog.port: "80"
+      traefik.madscientists_blog.protocol: http
+      tech.tams.dns_host: zone:tams-tech&host:demo.flix.tams.tech;zone:madscientists-co&host:demo.flix.madscientists.co
+
+networks:
+  web:
+    external: true

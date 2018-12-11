@@ -1,4 +1,5 @@
 require "./handler"
+
 class Flix::VideoHandler < Flix::Handler
   only ["/vid", "/vid/:id"]
 

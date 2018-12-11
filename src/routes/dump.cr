@@ -1,4 +1,5 @@
 require "./handler"
+
 class Flix::DumpHandler < Flix::Handler
   only ["/dmp"]
   include Flix

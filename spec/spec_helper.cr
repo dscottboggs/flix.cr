@@ -26,5 +26,5 @@ TEST_FILES = {
 Flix.config = Flix::Configuration.new(
   config_location: TEST_CONFIG_DIR,
   dirs: [TEST_MEDIA_DIR],
-  port: 21222,
+  port: 21222_u16,
 )

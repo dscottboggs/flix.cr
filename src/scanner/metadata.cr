@@ -163,7 +163,7 @@ module Flix
             new_file.parent = out_dir
             out_dir << new_file.as MediaDirectory
           else
-            if ((ft = MimeType.of(fullpath)).try &.is_a_video?) || (mp4_octet_stream_mime)
+            if MimeType.of(fullpath).try &.is_a_video?
               Flix.logger.debug "\
                 found child video at #{fullpath} in directory #{filepath} in \
                 Flix::Scanner::FileMetadata.from_file_path?"
@@ -194,7 +194,7 @@ module Flix
       def self.<<({{filetype.id}} : {{filetype.id.capitalize}}File)
         @@all_{{filetype.id}}s[{{filetype.id}}.hash] = {{filetype.id}}
       end
-      {%end%}
+      {% end %}
 
       def self.all_videos
         if @@all_videos.empty?
@@ -225,11 +225,6 @@ module Flix
           @@all_videos[hash] = vid
         end
         Flix.logger.debug "all_videos after association: #{@@all_videos}"
-      end
-      private macro mp4_octet_stream_mime
-        # this might be a bad idea but some mp4 files apparently have this generic
-        # mime type?
-        ft == MimeType::OctetStream && new_file.extension === ".mp4"
       end
     end
   end

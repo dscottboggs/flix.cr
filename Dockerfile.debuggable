@@ -1,0 +1,12 @@
+FROM ubuntu:latest
+RUN apt-get update && apt-get upgrade -yqq wget git libz-dev libssl-dev
+RUN wget --output-document "/tmp/crystal.deb" \
+    "https://github.com/crystal-lang/crystal/releases/download/0.26.1/crystal_0.26.1-1_amd64.deb"
+RUN dpkg -i /tmp/crystal.deb || apt-get install -fyqq
+RUN git clone https://github.com/dscottboggs/flix.cr.git
+WORKDIR flix.cr
+RUN shards install
+RUN apt-get install libcrypto++-dev -yqq && apt-get purge wget git -qqy && apt-get autoremove --purge -qqy && apt-get clean -yqq
+RUN crystal build -oflix src/flix.cr
+RUN mkdir /media
+CMD gdb --args flix --dir /media
