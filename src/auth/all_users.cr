@@ -16,6 +16,24 @@ module Flix::Authentication
       read
     end
 
+    # allow initializing with an initial user. If you call
+    # AllUsers.new(at: "/some/path"), and that file doesn't exist, it will raise
+    # Errno::ENOENT (no such file). This will catch that and attempt to write
+    # a new file in that case, with the only entry being the given username and
+    # password.
+    def initialize(at @location, user name, encrypted_password)
+      super()
+      self[name] = encrypted_password
+      read
+      write
+    rescue e : Errno
+      write
+    end
+
+    def delete(user : User)
+      delete user.name
+    end
+
     def write
       write_to @location
     end
@@ -28,6 +46,7 @@ module Flix::Authentication
           end
         end
       end
+      self
     end
 
     protected def write_to(file : String)
@@ -62,8 +81,9 @@ module Flix::Authentication
         end
       end
       File.open(LOCKFILE, "w").close
-      yield
+      rval = yield
       File.delete LOCKFILE
+      return rval
     end
 
     # read from the file, then merge in anything not present, and write the

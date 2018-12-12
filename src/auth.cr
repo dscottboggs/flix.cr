@@ -3,26 +3,36 @@ require "./auth/*"
 module Flix::Authentication
   extend self
 
-  @@signed_in_users = Hash(Token, String).new
   @@users = AllUsers.new at: USERS_FILE
 
   def encrypt(password)
     Scrypt::Password.create(password, KEY_LENGTH, SALT_SIZE)
   end
 
-  def sign_in_with(name, password)
-    jwt = UserHash.new
-    if @@users[name]? == password
-      token = Token.new
-      @@signed_in_users[token] = name
-      jwt["name"] = user.name
-      jwt["token"] = token
-    else
-      jwt["error"] = true
+  def auth_middleware
+    auth_handler = Kemal::AuthToken.new
+    auth_handler.sign_in do |name, password|
+      if @@users[name]? == password
+        User.new(name: name).to_h
+      else
+        {"error" => true}
+      end
     end
+    auth_handler.load_user do |jwt_payload|
+      User.load? user_info: jwt_payload
+    end
+    auth_handler
   end
 
-  def get_signed_in_user(user_info)
-    (token = user_info["token"]?) && @@signed_in_users[token]?
+  def check_username_pw(user : User, password : String)
+    @@users[user.name]? == password
+  end
+
+  def set_username_pw(user : User, password)
+    @@users[user.name] = enrypt password
+  end
+
+  def user_exists?(named username)
+    !!@@users[username]?
   end
 end
