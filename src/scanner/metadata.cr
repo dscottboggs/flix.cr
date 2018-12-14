@@ -23,10 +23,10 @@ module Flix
         @name = FileMetadata.get_title_from @path
       end
 
-      def self.from_file_path?(filepath : String) : self | Nil
-        info = File.info? filepath
-        self.new path: filepath, stat: info unless info.nil?
-      end
+      # def self.from_file_path?(filepath : String) : self | Nil
+      #   info = File.info? filepath
+      #   self.new path: filepath, stat: info unless info.nil?
+      # end
 
       # returns false; Directory overloads this with true
       def is_dir?
@@ -54,13 +54,13 @@ module Flix
         @stat = File.info path
       end
 
-      def filename
+      def _filename
         File.basename path
       end
 
       # Just the section at the end of the filename after the final '.', if that
       # dot is less than 5 characters from the end of the filename. Nillable!
-      def extension : String?
+      def self.extension(of_this filename) : String?
         dot_loc = path.rindex '.'
         if dot_loc && dot_loc >= (path.size - 5)
           path[dot_loc..-1]
@@ -69,7 +69,7 @@ module Flix
 
       # The filename without its `#extension` component. If the `#extension` is
       # `nil`, this is the whole filename.
-      def without_extension
+      def self.without_extension(filename)
         dot_loc = filename.rindex '.'
         if dot_loc && dot_loc >= (filename.size - 5)
           filename[0..dot_loc]
@@ -77,6 +77,12 @@ module Flix
           filename
         end
       end
+	  def extension
+		extension of_this: _filename
+	  end
+	  def without_extension
+		without_extension _filename
+	  end
 
       def to_s
         %{<"#{name}"@#{path}$#{hash}>}
@@ -90,15 +96,18 @@ module Flix
       def self.get_title_from(filepath : String) : String
         underscores, dots = 0_u32, 0_u32
         filename = File.basename filepath
-        index = filename.rindex '.'
-        if index && filename.size - index <= 5
+        # trim off the extension
+        if filename.size - (index = filename.rindex('.') || 0) <= 5
           filename = filename[0..index - 1]
         end
+		# count dots and underscores
         filename.each_char do |char|
+		  # also check for spaces, since we're already iterating over all of them
           return filename if char == ' '
           dots += 1 if char == '.'
           underscores += 1 if char == '_'
         end
+		# replace underscores or dots, depending on which has more
         if underscores > 0 || dots > 0
           return filename
             .gsub('_', ' ')
@@ -109,6 +118,7 @@ module Flix
             .gsub(/\s+/, " ")
             .strip
         end
+		# no spaces, dots, or underscores, so that leaves us with CamelCase
         filename = filename.gsub '-', " -"
         subs = Hash(Char, Char | String).new
         ('A'..'Z').each { |l| subs[l] = " " + l }
@@ -125,22 +135,23 @@ module Flix
         info = possibly_nil_info.not_nil!
         if info.file? && MimeType.of(filepath).try &.is_a_video?
           # we got a video file!
-          Flix.logger.debug "\
-            got video at #{filepath} in \
-            Flix::Scanner::FileMetadata.from_file_path?"
+          # Flix.logger.debug "\
+          #   got video at #{filepath} in \
+          #   Flix::Scanner::FileMetadata.from_file_path?"
           return VideoFile.new path: filepath, stat: info
         end
         unless info.directory?
-          Flix.logger.warn "got unrecognized file at #{filepath}"
+          # Flix.logger.warn "got unrecognized file at #{filepath}"
           return
         end
         thumb : PhotoFile? = nil
         videos_in_this_dir : UInt64 = 0
         photos_in_this_dir : UInt64 = 0
+        children_dir_count : UInt64 = 0
         out_dir = MediaDirectory.new path: filepath, stat: info
-        Flix.logger.debug "\
-          got directory at #{filepath} in \
-          Flix::Scanner::FileMetadata.from_file_path?"
+        # Flix.logger.debug "\
+        #   got directory at #{filepath} in \
+        #   Flix::Scanner::FileMetadata.from_file_path?"
 
         Dir.open filepath, &.each_child do |file|
           fullpath = File.join(filepath, file)
@@ -151,41 +162,40 @@ module Flix
             FileMetadata << PhotoFile.new path: fullpath, stat: info
             next
           end
+          # debugger
 
-          new_file = from_file_path? fullpath
-
-          case new_file
-          when nil then next
-          when .is_dir?
-            Flix.logger.debug "\
-              found child dir at #{fullpath} in directory #{filepath} in \
-              Flix::Scanner::FileMetadata.from_file_path?"
-            new_file.parent = out_dir
-            out_dir << new_file.as MediaDirectory
-          else
-            if MimeType.of(fullpath).try &.is_a_video?
-              Flix.logger.debug "\
-                found child video at #{fullpath} in directory #{filepath} in \
-                Flix::Scanner::FileMetadata.from_file_path?"
+          if new_file = from_file_path? fullpath
+            if MimeType.of(new_file.path) === MimeType::Directory
+              # Flix.logger.debug "\
+              #   found child dir at #{fullpath} in directory #{filepath} in \
+              #   Flix::Scanner::FileMetadata.from_file_path?"
+              new_file.parent = out_dir
+              out_dir << new_file.as MediaDirectory
+              children_dir_count += 1
+            elsif MimeType.of(new_file.path).try &.is_a_video?
+              # Flix.logger.debug "\
+              #   found child video at #{fullpath} in directory #{filepath} in \
+              #   Flix::Scanner::FileMetadata.from_file_path?"
               videos_in_this_dir += 1
               new_file.parent = out_dir
               out_dir << new_file.as VideoFile
               FileMetadata << new_file.as VideoFile
+            else
+              # Flix.logger.warn %<got unexpected filetype "#{Magic.mime_type.of(fullpath)}" @#{fullpath.inspect}>
             end
           end
         end
 
         # returns the first video in out_dir's children if out_dir only has one child video.
-        if videos_in_this_dir == 1 && out_dir.children && out_dir.children.not_nil!.size == 1
-          Flix.logger.debug "\
-            only found one child video at #{out_dir.children.not_nil!.first_value} in \
-            directory #{filepath} in \
-            Flix::Scanner::FileMetadata.from_file_path?; returning that video\
-            instead of the directory at #{filepath}.\n"
+        if videos_in_this_dir == 1 && (kids = out_dir.children) && kids.size == 1
+          # Flix.logger.debug "\
+          #   only found one child video at #{out_dir.children.not_nil!.first_value} in \
+          #   directory #{filepath} in \
+          #   Flix::Scanner::FileMetadata.from_file_path?; returning that video\
+          #   instead of the directory at #{filepath}.\n"
           return out_dir.children.not_nil!.first_value
         end
         out_dir.thumbnail = thumb unless thumb.nil?
-        Flix.logger.debug "Got final dir #{out_dir.inspect}."
         out_dir
       end
 
@@ -198,7 +208,7 @@ module Flix
 
       def self.all_videos
         if @@all_videos.empty?
-          Flix.logger.warn "empty list of videos"
+          # Flix.logger.warn "empty list of videos"
         end
         # Flix.logger.debug "all_videos: #{@@all_videos.inspect}"
         @@all_videos
@@ -206,7 +216,7 @@ module Flix
 
       def self.all_photos
         if @@all_photos.empty?
-          Flix.logger.warn "empty list of photos"
+          # Flix.logger.warn "empty list of photos"
         end
         # Flix.logger.debug "all_photos: #{@@all_photos.inspect}"
         @@all_photos
@@ -220,11 +230,12 @@ module Flix
         @@all_photos.values.each { |img| photo_names[img.name] = img }
         @@all_videos.each do |hash, vid|
           photo = photo_names[vid.name]?
-          Flix.logger.debug "Video name: #{vid.name}\nPhoto with that name? #{photo ? "yes" : "no"}"
+          # Flix.logger.debug "Video name: #{vid.name}\nPhoto with that name? #{photo ? "yes" : "no"}"
           vid.thumbnail = photo if photo
           @@all_videos[hash] = vid
         end
-        Flix.logger.debug "all_videos after association: #{@@all_videos}"
+        p! @@all_videos.size
+        # Flix.logger.debug "all_videos after association: #{@@all_videos}"
       end
     end
   end

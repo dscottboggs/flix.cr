@@ -4,6 +4,7 @@ PHOTO_FILE_TYPES = {Flix::Scanner::MimeType::JPEG, Flix::Scanner::MimeType::PNG}
 VIDEO_FILE_TYPES = {Flix::Scanner::MimeType::MP4, Flix::Scanner::MimeType::WebM, Flix::Scanner::MimeType::Matroska}
 
 enum Flix::Scanner::MimeType
+  Directory
   MP4
   WebM
   MKV
@@ -19,6 +20,7 @@ enum Flix::Scanner::MimeType
     when MKV  then "video/x-matroska"
     when JPEG then "image/jpeg"
     when PNG  then "image/png"
+    when Directory then "inode/directory"
     end
   end
 
@@ -30,6 +32,7 @@ enum Flix::Scanner::MimeType
     when .starts_with? "image/jpeg"               then JPEG
     when .starts_with? "image/png"                then PNG
     when .starts_with? "application/octet-stream" then OctetStream
+    when "inode/directory" then Directory
     end
   end
 

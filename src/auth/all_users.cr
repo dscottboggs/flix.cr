@@ -2,17 +2,32 @@ require "json"
 require "./scrypt"
 
 module Flix::Authentication
-  LOCKFILE      = File.join(Flix.config.config_location, "users.auth.lock")
   USERS_FILE    = File.join(Flix.config.config_location, "users.auth")
   MAX_WAIT_TIME =   3
   SALT_SIZE     =  32
   KEY_LENGTH    = 512 # Maximum allowed values
 
-  class AllUsers < Hash(String, Scrypt::Password)
+  class AllUsers
+    # Allow serializing relevant data to file and back.
+    # We could just include Serializable on AllUsers but this is just easier to
+    # reason about.
+    struct AllUsersSerialization
+      include JSON::Serializable
+      property users : Hash(String, Scrypt::Password)
+
+      def initialize(@users); end
+    end
+
+    # where to save the file for later.
     property location : String
 
-    def initialize(at @location)
-      super()
+    # allow indexing an instance of AllUsers directly
+    delegate "[]", to: @users
+    delegate "[]?", to: @users
+    delegate :delete, to: @users
+
+    def initialize(at @location : String)
+      @users = Hash(String, Scrypt::Password).new
       read
     end
 
@@ -22,11 +37,21 @@ module Flix::Authentication
     # a new file in that case, with the only entry being the given username and
     # password.
     def initialize(at @location, user name, encrypted_password)
-      super()
+      @users = Hash(String, Scrypt::Password).new
       self[name] = encrypted_password
-      read
-      write
-    rescue e : Errno
+      begin
+        read
+      rescue e : Errno
+        if e.errno == Errno::ENOENT
+          begin
+            File.delete lockfile
+          rescue e : Errno
+          end
+          write
+        else
+          raise e
+        end
+      end
       write
     end
 
@@ -38,18 +63,12 @@ module Flix::Authentication
       write_to @location
     end
 
-    protected def write_to(file : IO)
-      JSON::Builder.new io: file do |builder|
-        builder.object do
-          builder.field "users" do
-            to_json(builder)
-          end
-        end
-      end
+    private def write_to(file : IO)
+      AllUsersSerialization.new(@users).to_json JSON::Builder.new io: file
       self
     end
 
-    protected def write_to(file : String)
+    private def write_to(file : String)
       with_lock do
         File.open file, mode: "w" do |file|
           write_to file
@@ -60,29 +79,40 @@ module Flix::Authentication
     def read
       with_lock do
         File.open @location do |file|
-          merge! Hash(String, Scrypt::Password).from_json(file) do |key, in_memory, from_file|
-            in_memory
-          end
+          merge! AllUsersSerialization.from_json file
+        end
+      end
+      self
+    end
+
+    def merge!(other)
+      if new_users = other.users
+        @users.merge! new_users do |key, in_memory, from_file|
+          in_memory
         end
       end
     end
 
+    private def lockfile
+      "#{@location}.lock"
+    end
+
     private def with_lock
       waited = 0
-      while File.exists? LOCKFILE
-        Flix.logger.warn "#{LOCKFILE} exists, waiting for other process to be done"
+      while File.exists? lockfile
+        STDERR.puts "#{lockfile} exists, waiting for other process to be done"
         sleep 1
         waited += 1
         if waited > MAX_WAIT_TIME && MAX_WAIT_TIME > 0
           raise Errno.new(
-            message: "#{LOCKFILE} existed for longer than #{waited} seconds, bailing.",
+            message: "#{lockfile} existed for longer than #{waited + 1} seconds",
             errno: Errno::EBUSY
           )
         end
       end
-      File.open(LOCKFILE, "w").close
+      File.touch lockfile
       rval = yield
-      File.delete LOCKFILE
+      File.delete lockfile
       return rval
     end
 

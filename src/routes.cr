@@ -7,7 +7,6 @@ require "./routes/*"
 require "./auth"
 
 module Flix
-  include Authentication
   extend self
 
   def serve_up
@@ -23,12 +22,18 @@ module Flix
     get "/" { |env| env.redirect "/index.html" }
 
     public_folder config.webroot
-    add_handler auth_middleware
-    Kemal.run do |conf|
-      if server = conf.server
-        server.bind_tcp("0.0.0.0", Flix.config.port.to_i, reuse_port: config.processes > 1)
-      else
-        raise "got nil server! look at config class"
+    add_handler Authentication.middleware
+    if (env = ENV["KEMAL_ENV"]?) && (env == "test")
+      # kemal-spec only works like this
+      Kemal.run
+    else
+      # http://kemalcr.com/cookbook/reuse_port/
+      Kemal.run do |conf|
+        if server = conf.server
+          server.bind_tcp("0.0.0.0", Flix.config.port.to_i, reuse_port: config.processes > 1)
+        else
+          raise "got nil server! look at config class"
+        end
       end
     end
   end

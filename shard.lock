@@ -1,5 +1,13 @@
 version: 1.0
 shards:
+  callback:
+    github: mosop/callback
+    version: 0.6.3
+
+  cli:
+    github: mosop/cli
+    version: 0.7.0
+
   exception_page:
     github: crystal-loot/exception_page
     version: 0.1.1
@@ -14,7 +22,7 @@ shards:
 
   kemal-auth-token:
     github: dscottboggs/kemal-auth-token
-    commit: 08f10e628e717acda6b97ec861b577c57dc78840
+    commit: a8f3a6b7ecb9c94e0a84332d89598a1c873b6f35
 
   kilt:
     github: jeromegn/kilt
@@ -23,6 +31,10 @@ shards:
   magic:
     github: dscottboggs/magic.cr
     commit: 222834bca5ef65073a2b214dbfb8ccd710c958eb
+
+  optarg:
+    github: mosop/optarg
+    version: 0.5.8
 
   radix:
     github: luislavena/radix
@@ -35,4 +47,8 @@ shards:
   spec-kemal:
     github: kemalcr/spec-kemal
     version: 0.5.0
+
+  string_inflection:
+    github: mosop/string_inflection
+    version: 0.2.1
 

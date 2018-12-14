@@ -1,8 +1,6 @@
 # ENV["FLIX_DEBUG"] = "yes"
-
+require "spec-kemal"
 require "spec"
-require "http"
-require "../src/flix"
 
 URLS = {
   video_one: "https://s3.amazonaws.com/x265.org/video/Tractor_500kbps_x264.mp4",
@@ -28,3 +26,5 @@ Flix.config = Flix::Configuration.new(
   dirs: [TEST_MEDIA_DIR],
   port: 21222_u16,
 )
+
+require "../src/flix"

@@ -6,83 +6,75 @@ require "./metadata"
 module Flix
   module Scanner
     class MediaDirectory < FileMetadata
-      @children_hash : Hash(String, FileMetadata)?
+      @children_hash = Hash(String, FileMetadata).new
       @json_cache : String?
 
+      delegate :size, to: @children_hash
+
       def initialize(@path : String,
-                     @children : Array(FileMetadata)? = nil,
+                     @children = Array(FileMetadata).new,
                      @thumbnail : PhotoFile? = nil,
                      @stat : Crystal::System::FileInfo? = nil)
         @name = FileMetadata.get_title_from @path
       end
 
       def children=(@children : Array(FileMetadata))
+        @json_cache = nil
       end
 
-      def children : Hash(String, FileMetadata)?
-        if @children_hash.nil? || @children_hash.not_nil!.values != @children
-          if @children_hash.nil?
-            @children_hash = Hash(String, FileMetadata).new
-          end
-          unless (c = @children).nil?
-            c.each do |child|
-              Flix.logger.debug "adding child #{child.name} to @children_hash for #{name}"
-              @children_hash.not_nil![child.hash] = child
-            end
+      def children : Hash(String, FileMetadata)
+        if @children_hash.values != @children
+          Flix.logger.debug "\
+            reloading children hash:\
+            @children_hash # => #{@children_hash.inspect} \
+            @children # => #{@children.inspect} \
+            @children_hash.values # => #{@children_hash.values.inspect}"
+          @children.each do |child|
+            @children_hash[child.hash] = child
           end
         end
         @children_hash
       end
 
       def <<(child : FileMetadata?)
-        if @children.nil?
-          @children = Array(FileMetadata).new
-        end
-        @children.not_nil! << child
-        if @children_hash.nil?
-          @children_hash = Hash(String, FileMetadata).new
-        end
-        @children_hash.not_nil![child.hash] = child
+        @children << child
+        @json_cache = nil
+        @children_hash[child.hash] = child
       end
 
       def each_child
-        unless children.nil?
-          @children_hash.not_nil!.each { |k, v| yield k, v }
-        end
+        @children_hash.each { |k, v| yield k, v }
       end
 
       def to_json : String
-        return @json_cache.not_nil! unless @json_cache.nil?
-        buf = String::Builder.new
-        builder = JSON::Builder.new(buf)
-        builder.start_document
-        to_json(builder)
-        builder.end_document
-        (@json_cache = buf.to_s).not_nil!
+        @json_cache ||= begin
+          buf = String::Builder.new
+          builder = JSON::Builder.new(buf)
+          builder.document do
+            to_json(builder)
+          end
+          buf.to_s
+        end
       end
 
       def to_json(builder : JSON::Builder)
         builder.object do
-          Flix.logger.debug "Adding title #{name.inspect} and thumbail #{thumbnail.inspect} to json"
+          # Flix.logger.debug "Adding title #{name.inspect} and thumbail #{thumbnail.inspect} to json"
           builder.field "title", name
-          unless thumbnail.nil?
-            builder.field "thumbnail", thumbnail.hash
-          end
-          children_count = 0
+          builder.field "thumbnail", thumbnail.hash unless thumbnail.nil?
           each_child do |hash, child|
-            if child.is_a? MediaDirectory
+            if child.is_dir?
               # debugger
               builder.field child.hash do
                 child.as(MediaDirectory).to_json(builder)
               end
             else
-              Flix.logger.debug "Added child #{child.name} to directory #{name}'s json"
+              # Flix.logger.debug "Added child #{child.name} to directory #{name}'s json"
               builder.field hash, child.name
-              children_count += 1
             end
           end
-          if children_count == 0
-            Flix.logger.warn "got no children from #{self.inspect}"
+          if size == 0
+            # Flix.logger.warn "got no children from #{self.inspect}"
           end
         end
       end

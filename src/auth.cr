@@ -9,17 +9,19 @@ module Flix::Authentication
     Scrypt::Password.create(password, KEY_LENGTH, SALT_SIZE)
   end
 
-  def auth_middleware
+  def middleware
     auth_handler = Kemal::AuthToken.new
-    auth_handler.sign_in do |name, password|
-      if @@users[name]? == password
-        User.new(name: name).to_h
+    auth_handler.sign_in do |email, password|
+      output = UserHash.new
+      if @@users[email]? == password
+        output["name"] = email
       else
-        {"error" => true}
+        output["error"] = true
       end
+      output
     end
     auth_handler.load_user do |jwt_payload|
-      User.load? user_info: jwt_payload
+      User.load user_info: jwt_payload
     end
     auth_handler
   end

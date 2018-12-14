@@ -1,5 +1,5 @@
-require "../config/configuration_class"
-require "./src/auth/all_users"
+require "../src/config/configuration_class"
+require "../src/auth/all_users"
 require "cli"
 require "colorize"
 
@@ -23,7 +23,7 @@ class UserModifier < Cli::Supercommand
     end
   end
 
-  class AddUser < CommonCommands
+  class Add < CommonCommands
     class Options
       string UsernameOptionAliases
       string PasswordOptionAliases
@@ -56,30 +56,29 @@ class UserModifier < Cli::Supercommand
     end
   end
 
-  class RemoveUser < CommonCommands
+  class Remove < CommonCommands
     class Options
       string UsernameOptionAliases
       string PasswordOptionAliases
       bool %w<-f --force --delete-last-user>
     end
 
+    WARNING = %<#{"ARE YOU SURE".colorize(:red).mode(:bold)} #{"YOU WANT TO DELETE THE #{"ONLY".colorize(:red)} USER?".colorize.mode(:bold)}>
+
     def run
       configure
       users = Flix::Authentication::AllUsers.new at: config_location
       if (user = User.new(options.username)).is_authenticated_by? options.password
-        warn_about_last_user
+        print <<-HERE
+          There is only one user left, "#{user.name}". If you choose to delete
+          this user, the server will not start until you've created another. #{WARNING}
+          (yes/NO)?:
+        HERE
+        unless (input = STDIN.gets) && (input.match /y(es)?/i)
+          raise "not deleting last user!"
+        end
         users.delete user
       end
-    end
-
-    WARNING = %<#{"ARE YOU SURE".colorize(:red).mode(:bold)} #{"YOU WANT TO DELETE THE #{"ONLY".colorize(:red)} USER?".colorize.mode(:bold)}>
-    macro warn_about_last_user
-      print <<-HERE
-        There is only one user left, "#{user.name}". If you choose to delete
-        this user, the server will not start until you've created another. #{WARNING}
-        (yes/NO)?:
-      HERE
-      raise "not deleting last user!" unless (input = STDIN.gets) && (input.match /y(es)?/i)
     end
   end
 end
