@@ -16,6 +16,7 @@ module Flix
       @stat : File::Info?
       property thumbnail : PhotoFile?
       property parent : MediaDirectory? = nil
+      @mime_type : MimeType?
 
       def initialize(@path : String,
                      @stat : File::Info? = nil,
@@ -77,15 +78,21 @@ module Flix
           filename
         end
       end
-	  def extension
-		extension of_this: _filename
-	  end
-	  def without_extension
-		without_extension _filename
-	  end
+
+      def extension
+        extension of_this: _filename
+      end
+
+      def without_extension
+        without_extension _filename
+      end
 
       def to_s
         %{<"#{name}"@#{path}$#{hash}>}
+      end
+
+      def mime_type
+        @mime_type ||= MimeType.of path
       end
 
       # Uses some heuristics to parse a human-readable title from some common
@@ -100,14 +107,14 @@ module Flix
         if filename.size - (index = filename.rindex('.') || 0) <= 5
           filename = filename[0..index - 1]
         end
-		# count dots and underscores
+        # count dots and underscores
         filename.each_char do |char|
-		  # also check for spaces, since we're already iterating over all of them
+          # also check for spaces, since we're already iterating over all of them
           return filename if char == ' '
           dots += 1 if char == '.'
           underscores += 1 if char == '_'
         end
-		# replace underscores or dots, depending on which has more
+        # replace underscores or dots, depending on which has more
         if underscores > 0 || dots > 0
           return filename
             .gsub('_', ' ')
@@ -118,7 +125,7 @@ module Flix
             .gsub(/\s+/, " ")
             .strip
         end
-		# no spaces, dots, or underscores, so that leaves us with CamelCase
+        # no spaces, dots, or underscores, so that leaves us with CamelCase
         filename = filename.gsub '-', " -"
         subs = Hash(Char, Char | String).new
         ('A'..'Z').each { |l| subs[l] = " " + l }

@@ -7,13 +7,13 @@ class Flix::Authentication::User
     if (name_any = user_info["name"]?) && (name = name_any.as_s?) && !name.empty?
       User.new(name).to_h
     else
-	  puts %(got user_info["name"]? #=> #{user_info["name"]?.inspect})
+      puts %(got user_info["name"]? #=> #{user_info["name"]?.inspect})
       UserHash{"error" => true}
     end
   end
 
   def to_h
-    UserHash {"name" => @name}
+    UserHash{"name" => @name}
   end
 
   def is_authenticated_by?(password)

@@ -15,11 +15,11 @@ enum Flix::Scanner::MimeType
 
   def to_s
     case self
-    when MP4  then "video/mp4"
-    when WebM then "video/webm"
-    when MKV  then "video/x-matroska"
-    when JPEG then "image/jpeg"
-    when PNG  then "image/png"
+    when MP4       then "video/mp4"
+    when WebM      then "video/webm"
+    when MKV       then "video/x-matroska"
+    when JPEG      then "image/jpeg"
+    when PNG       then "image/png"
     when Directory then "inode/directory"
     end
   end
@@ -32,7 +32,7 @@ enum Flix::Scanner::MimeType
     when .starts_with? "image/jpeg"               then JPEG
     when .starts_with? "image/png"                then PNG
     when .starts_with? "application/octet-stream" then OctetStream
-    when "inode/directory" then Directory
+    when "inode/directory"                        then Directory
     end
   end
 

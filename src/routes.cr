@@ -15,10 +15,46 @@ module Flix
   end
 
   private def do_serve_up
-    add_handler PingHandler.new
-    add_handler DumpHandler.new
-    add_handler ImageHandler.new
-    add_handler VideoHandler.new
+    get("/ping") { "pong" }
+    # output a representation of the file structure
+    get("/dmp") { Flix.config.dirs.to_json }
+    # serve an image
+    get "/img/:id" do |env|
+      id = env.params.url["id"]? || env.params.query["id"]?
+      if id.nil?
+        render_404
+        next
+      end
+      # try grabbing it as a thumbnail for a video first.
+      if (video = Scanner::FileMetadata.all_videos[id]?) &&
+         (photo = video.thumbnail) &&
+         (File.exists? photo.path)
+        send_file env, path: photo.path, mime_type: photo.mime_type.to_s
+      elsif (photo = Scanner::FileMetadata.all_photos[id]?) &&
+            (File.exists? photo.path)
+        send_file env, path: photo.path, mime_type: photo.mime_type.to_s
+      else
+        render_404
+      end
+    end
+    # serve a video
+    get "/vid/:id" do |env|
+      id = env.params.url["id"]? || env.params.query["id"]?
+      if id.nil?
+        render_404
+        next
+      end
+      if video = Scanner::FileMetadata.all_videos[id]?
+        Flix.logger.debug "rendering video #{video.path}"
+        send_file env, path: video.path, mime_type: video.mime_type.to_s
+      else
+        render_404
+      end
+    rescue e : Errno
+      raise e unless {Errno::EPIPE, Errno::ECONNRESET}.includes?(e.errno)
+    end
+
+    # the webroot for the server
     get "/" { |env| env.redirect "/index.html" }
 
     public_folder config.webroot

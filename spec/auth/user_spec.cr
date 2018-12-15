@@ -1,10 +1,10 @@
 describe Flix::Authentication::User do
   it "loads from the received jwt token type" do
-	data = Hash(String, JSON::Any) { "name" => JSON::Any.new("test_user") }
-	result = Flix::Authentication::User.load(data)
+    data = Hash(String, JSON::Any){"name" => JSON::Any.new("test_user")}
+    result = Flix::Authentication::User.load(data)
     result.should be_a UserHash
-	result["error"]?.should be_nil
-	result["name"].should eq "test_user"
+    result["error"]?.should be_nil
+    result["name"].should eq "test_user"
   end
   describe "#is_authenticated_by?" do
     it "validates the correct password" do

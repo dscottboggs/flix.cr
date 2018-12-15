@@ -39,8 +39,8 @@ describe Flix::Authentication::AllUsers do
     # the `#initialize()` method.
     it "reads the expected state from the example file" do
       read_pw = Flix::Authentication::AllUsers.new(
-          at: File.join(TEST_CONFIG_DIR, "users.auth")
-        )["TEST USER"]
+        at: File.join(TEST_CONFIG_DIR, "users.auth")
+      )["TEST USER"]
       read_pw.should be_a Scrypt::Password
       read_pw.should eq File.read(File.join(TEST_CONFIG_DIR, "unencrypted_test_user_password")).chomp
     end

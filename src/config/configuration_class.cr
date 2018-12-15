@@ -69,7 +69,7 @@ module Flix
 
     def logger : Logger
       if @logger.nil?
-        @logger = Logger.new STDOUT, level: Logger::WARN
+        @logger = Logger.new STDOUT, level: Logger::DEBUG
       else
         @logger.not_nil!
       end
