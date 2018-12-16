@@ -12,15 +12,19 @@ enum Flix::Scanner::MimeType
   JPEG
   PNG
   OctetStream
+  # Any mime-type except application/octet-stream gets sent as a whole to the
+  # client, whereas octet-stream
+  Streamable  = OctetStream
 
   def to_s
     case self
-    when MP4       then "video/mp4"
-    when WebM      then "video/webm"
-    when MKV       then "video/x-matroska"
-    when JPEG      then "image/jpeg"
-    when PNG       then "image/png"
-    when Directory then "inode/directory"
+    when MP4                     then "video/mp4"
+    when WebM                    then "video/webm"
+    when MKV, Matroska           then "video/x-matroska"
+    when JPEG                    then "image/jpeg"
+    when PNG                     then "image/png"
+    when Directory               then "inode/directory"
+    when Streamable, OctetStream then "application/octet-stream"
     end
   end
 
