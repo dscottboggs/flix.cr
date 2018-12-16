@@ -15,7 +15,7 @@ module Flix
       hash_size.times do |i|
         hash_value[i] = digest[i] ^ digest[i + hash_size]
       end
-      Base64.urlsafe_encode hash_value
+      Base64.urlsafe_encode(hash_value).strip('=')
     end
 
     def command_escape(filepath : String)
