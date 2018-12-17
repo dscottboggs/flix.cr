@@ -24,6 +24,7 @@ module Flix::Authentication
     # allow indexing an instance of AllUsers directly
     delegate "[]", to: @users
     delegate "[]?", to: @users
+    delegate "[]=", to: @users
     delegate :delete, to: @users
 
     def initialize(at @location : String)
@@ -64,7 +65,10 @@ module Flix::Authentication
     end
 
     private def write_to(file : IO)
-      AllUsersSerialization.new(@users).to_json JSON::Builder.new io: file
+      builder = JSON::Builder.new io: file
+      builder.document do
+        AllUsersSerialization.new(@users).to_json(builder)
+      end
       self
     end
 

@@ -14,7 +14,7 @@ enum Flix::Scanner::MimeType
   OctetStream
   # Any mime-type except application/octet-stream gets sent as a whole to the
   # client, whereas octet-stream
-  Streamable  = OctetStream
+  Streamable = OctetStream
 
   def to_s
     case self

@@ -1,13 +1,14 @@
 require "../routes_spec"
 
 describe "/vid" do
-  context "/m8eHp5iFD88=" do
-    it "works" do
-	  get "/vid/m8eHp5iFD88="
-	  response.status_code.should eq 200
-	  it "responds with the expected headers" do
-		response.headers["Content-Type"]?.should eq "application/octet-stream"
-	  end
+  it "streams a video found in the /dmp results" do
+    get "/dmp"
+    response.status_code.should eq 200
+    id = Array(Hash(String, String)).from_json(response.body).first.reject("title", "thumbnail").keys.first
+    get "/vid/#{id}"
+    response.status_code.should eq 200
+    it "responds with the expected headers" do
+      response.headers["Content-Type"]?.should eq "application/octet-stream"
     end
   end
 end
