@@ -27,6 +27,12 @@ module Flix::Authentication
     delegate "[]=", to: @users
     delegate :delete, to: @users
 
+    # :nodoc:
+    def initialize(@users)
+      # a hack for testing
+      @location = ""
+    end
+
     def initialize(at @location : String)
       @users = Hash(String, Scrypt::Password).new
       read

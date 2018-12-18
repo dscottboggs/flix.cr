@@ -34,6 +34,9 @@ module Flix
     # As such, this feature is highly experimental, and disabled by default.
     setter processes : Int32?
 
+    property sign_in_endpoint = "/sign_in"
+    property allow_unauthorized : Bool = ENV["KEMAL_ENV"]? == "test"
+
     def processes : Int
       @processes ||= ENV["flix_processes"]?.try &.to_i || 1
     rescue e : ArgumentError
@@ -66,6 +69,10 @@ module Flix
       @initialized_dirs = Array(Scanner::MediaDirectory).new
       Flix.logger.warn "using webroot #{webroot}"
       scan_dirs
+    end
+
+    def users_file
+      File.join @config_location, "users.auth"
     end
 
     def logger : Logger

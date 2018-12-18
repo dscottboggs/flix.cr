@@ -16,10 +16,16 @@ module Flix
   end
 
   private def do_serve_up
+    add_handler Authentication::Handler.new
+    error 404 { "404 not found.\r\n" }
+    error 403 { "Forbidden.\r\n" }
     get("/ping") { "pong" }
-    Kemal.config.add_handler Authentication.middleware
     # output a representation of the file structure
-    get("/dmp") { Flix.config.dirs.to_json }
+    get "/dmp" do |ctx|
+      next unless user_found?(ctx)
+      Flix.logger.debug "got user #{ctx.current_user.inspect}"
+      Flix.config.dirs.to_json
+    end
     # serve an image
     get "/img", &serve_img
     get "/img/:id", &serve_img
@@ -28,7 +34,7 @@ module Flix
     get "/vid/:id", &serve_video
 
     # the webroot for the server
-    get "/" { |env| env.redirect "/index.html" }
+    get "/" { |context| context.redirect "/index.html" }
 
     public_folder config.webroot
     if (env = ENV["KEMAL_ENV"]?) && (env == "test")
@@ -48,8 +54,10 @@ module Flix
 
   def serve_img : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
-    ->(env : HTTP::Server::Context) do
-      id = env.params.url["id"]? || env.params.query["id"]?
+    ->(context : HTTP::Server::Context) do
+      return unless user_found?(context)
+      Flix.logger.debug context.current_user
+      id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
         return
@@ -60,10 +68,10 @@ module Flix
          (photo = video.thumbnail) &&
          (File.exists? photo.path)
         Flix.logger.debug "sending photo #{photo.path} of type #{photo.mime_type}"
-        send_file env, path: photo.path, mime_type: photo.mime_type.to_s
+        send_file context, path: photo.path, mime_type: photo.mime_type.to_s
       elsif (photo = Scanner::FileMetadata.all_photos[id]?) &&
             (File.exists? photo.path)
-        send_file env, path: photo.path, mime_type: Scanner::MimeType::Streamable.to_s
+        send_file context, path: photo.path, mime_type: Scanner::MimeType::Streamable.to_s
       else
         page_not_found
       end
@@ -73,8 +81,9 @@ module Flix
 
   def serve_video : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
-    ->(env : HTTP::Server::Context) do
-      id = env.params.url["id"]? || env.params.query["id"]?
+    ->(context : HTTP::Server::Context) do
+      return unless user_found?(context)
+      id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
         return
@@ -82,7 +91,7 @@ module Flix
       Flix.logger.debug "got video with ID #{id}"
       if video = Scanner::FileMetadata.all_videos[id]?
         Flix.logger.debug "rendering video #{video.path} of type #{video.mime_type}"
-        send_file env, path: video.path, mime_type: Scanner::MimeType::Streamable.to_s
+        send_file context, path: video.path, mime_type: Scanner::MimeType::Streamable.to_s
       else
         page_not_found
       end
@@ -92,8 +101,17 @@ module Flix
     end
   end
 
+  def user_found?(context)
+    if context.current_user.try(&.["name"]?) || Flix.config.allow_unauthorized
+      true
+    else
+      context.response.status_code = 403
+      false
+    end
+  end
+
   macro page_not_found
-    env.response.status_code = 404
+    context.response.status_code = 404
     render_404
   end
 end
