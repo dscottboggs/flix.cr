@@ -28,10 +28,5 @@ dependencies:
   # for hashing passwords
   scrypt:
     github: ysbaddaden/scrypt-crystal
-  # for the CLI script
-  cli:
-    github: mosop/cli
-  spec-kemal:
-    github: kemalcr/spec-kemal
 
 license: AGPL
