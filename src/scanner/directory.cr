@@ -24,11 +24,6 @@ module Flix
 
       def children : Hash(String, FileMetadata)
         if @children_hash.values != @children
-          Flix.logger.debug "\
-            reloading children hash:\
-            @children_hash # => #{@children_hash.inspect} \
-            @children # => #{@children.inspect} \
-            @children_hash.values # => #{@children_hash.values.inspect}"
           @children.each do |child|
             @children_hash[child.hash] = child
           end

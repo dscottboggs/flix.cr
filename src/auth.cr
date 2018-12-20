@@ -14,7 +14,7 @@ module Flix::Authentication
   end
 
   def set_username_pw(user : User, password)
-    @@users[user.name] = enrypt password
+    @@users[user.name] = encrypt password
   end
 
   def user_exists?(named username)

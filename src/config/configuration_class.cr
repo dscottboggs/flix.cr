@@ -67,7 +67,6 @@ module Flix
         @dirs = default_dirs
       end
       @initialized_dirs = Array(Scanner::MediaDirectory).new
-      Flix.logger.warn "using webroot #{webroot}"
       scan_dirs
     end
 

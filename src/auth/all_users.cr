@@ -21,11 +21,16 @@ module Flix::Authentication
     # where to save the file for later.
     property location : String
 
-    # allow indexing an instance of AllUsers directly
+    # allow indexing an instance of AllUsers directly, as with other methods of
+    # Hash, like #size and #delete
     delegate "[]", to: @users
     delegate "[]?", to: @users
     delegate "[]=", to: @users
     delegate :delete, to: @users
+    delegate :size, to: @users
+
+    # I think this is not working due to a bug in crystal --
+    # foward_missing_to @users
 
     # :nodoc:
     def initialize(@users)
