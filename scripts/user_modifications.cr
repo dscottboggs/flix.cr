@@ -1,36 +1,25 @@
 #!/usr/bin/env crystal
-require "../src/config/configuration_class"
-require "../src/auth/all_users"
+require "../src/auth/scrypt"
 require "colorize"
+require "json"
 require "option_parser"
+require "file_utils"
+include FileUtils
 WARNING = %<#{"ARE YOU SURE".colorize(:red).mode(:bold)} #{"YOU WANT TO DELETE THE #{"ONLY".colorize(:red)} USER?".colorize.mode(:bold)}>
 
-enum Actions
-  Add
-  ChangePassword
-  Remove
-  def self.from_s(string)
-    case string.downcase
-    when "add" then Add
-    when .starts_with?("change") then ChangePassword
-    when "rm", "remove" then Remove
-    else
-      abort %<Invalid action #{string}. Must be one of: "add", "change", "rm", or "remove">
-    end
-  end
-end
-
+SALT_SIZE     =  32
+KEY_LENGTH    = 512 # Maximum allowed values
 username = ""
 old_password = ""
 new_password = ""
 config_path = ""
 args = ARGV
-action = Actions.from_s args.shift
+action = args.shift
 
 OptionParser.parse args do |parser|
-  parser.banner "Flix user modification scripts"
+  parser.banner = "Flix user modification scripts"
 
-  parser.on "-f CONFIG", "--config CONFIG", "the path to the config file to change" do |path|
+  parser.on "-f PATH", "--file PATH", "the path to the users file to change" do |path|
     config_path = path
   end
   parser.on "-u USER", "--user USER", "the name of the new user" do |user|
@@ -47,35 +36,71 @@ OptionParser.parse args do |parser|
   end
 end
 
-Flix.config = Flix::Configuration.new config_location: options.config, port: 0
+struct Users
+  include JSON::Serializable
+  property users : Hash(String, Scrypt::Password)
+  forward_missing_to @users
+  def initialize(@users);end
+  def initialize
+    @users = Hash(String, Scrypt::Password).new
+  end
+  def self.read(from filepath : String)
+    File.open filepath do |file|
+      self.from_json file
+    end
+  end
+  def write(to filepath : String)
+    File.open filepath, mode: "w" do |file|
+      to_json file
+    end
+  end
+end
+
+config_dir = File.dirname config_path
+mkdir config_dir unless File.exists? config_dir
+
+# Flix.config = Flix::Configuration.new config_path: config_path, port: 0_u16
 
 case action
-when Actions::Add
-  AllUsers.new at: config_path,
-    user: username,
-    encrypted_password: Flix::Authentication.encrypt old_password
-when Actions::ChangePassword
-  users = Flix::Authentication::AllUsers.new at: config_location
-  user = User.new(username)
-  if user.is_authenticated_by? old_password
-    user.set_password to: new_password
-  end
-  users[user.name] = user
-  users.write
-when Actions::Remove
-  users = Flix::Authentication::AllUsers.new at: config_location
-  if (user = User.new(options.username)).is_authenticated_by? options.password
-    if users.size < 2
-      print <<-HERE
-        There is only one user left, "#{user.name}". If you choose to delete
-        this user, the server will not start until you've created another.
-        #{WARNING}
-        (yes/NO)?:
-      HERE
-      unless (input = STDIN.gets) && input.downcase.starts_with? "y"
-        raise "not deleting last user!"
-      end
+when "add", "new", "create"
+  users = if File.exists? config_path
+            Users.read config_path
+          else
+            Users.new
+          end
+  abort message: "\
+    user #{username} already exists! Use the 'change' command to change an \
+    existing user's password" if users[username]?
+  users[username] = Scrypt::Password.create old_password, SALT_SIZE, KEY_LENGTH
+  users.write config_path
+when .starts_with? "change"
+  users = Users.read from: config_path
+  current_pw = users[username]?
+  abort message: "no such user #{username}" if current_pw.nil?
+  abort message: "old password #{old_password} is incorrect, not changing password" unless current_pw == old_password
+  users[username] = Scrypt::Password.create new_password, SALT_SIZE, KEY_LENGTH
+  users.write to: config_path
+when "remove", "rm", "delete"
+  users = Users.read from: config_path
+  current_pw = users[username]?
+  abort message: "no such user #{username}" if current_pw.nil?
+  abort message: "password #{old_password} is incorrect, not deleting user" unless current_pw == old_password
+  if users.size < 2
+    print <<-HERE
+      There is only one user left, "#{users.first_key}". If you choose to delete
+      this user, the server will not start until you've created another.
+      #{WARNING}
+      (yes/NO)?:
+    HERE
+    if (input = STDIN.gets) && input.downcase.starts_with? "y"
+      File.delete config_path
+      exit
+    else
+      abort "not deleting last user!"
     end
-    users.delete user
   end
+  users.delete username
+  users.write config_path
+else
+  abort message: %<Invalid action #{action}. Must be one of: "add", "new", "create", "change", "delete" "rm", or "remove">
 end
