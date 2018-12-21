@@ -241,7 +241,7 @@ module Flix
           vid.thumbnail = photo if photo
           @@all_videos[hash] = vid
         end
-        p! @@all_videos.size
+        # p! @@all_videos.size
         # Flix.logger.debug "all_videos after association: #{@@all_videos}"
       end
     end

@@ -21,10 +21,6 @@ TEST_FILES = {
   image_one: File.open(IMAGE_ONE_PATH),
 }
 
-Flix.config = Flix::Configuration.new(
-  config_location: TEST_CONFIG_DIR,
-  dirs: [TEST_MEDIA_DIR],
-  port: 21222_u16,
-)
+Flix.config = Flix::Configuration.new config_location: TEST_CONFIG_DIR, dirs: [ TEST_MEDIA_DIR ]
 
 require "../src/flix"

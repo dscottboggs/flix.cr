@@ -16,7 +16,7 @@ module Flix
 
   def config
     if @@config.nil?
-      @@config = parse_args
+      @@config = Configuration.from_args ARGV
     else
       @@config.not_nil!
     end

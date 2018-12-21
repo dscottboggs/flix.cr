@@ -7,8 +7,8 @@ require "file_utils"
 include FileUtils
 WARNING = %<#{"ARE YOU SURE".colorize(:red).mode(:bold)} #{"YOU WANT TO DELETE THE #{"ONLY".colorize(:red)} USER?".colorize.mode(:bold)}>
 
-SALT_SIZE     =  32
-KEY_LENGTH    = 512 # Maximum allowed values
+SALT_SIZE  =  32
+KEY_LENGTH = 512 # Maximum allowed values
 username = ""
 old_password = ""
 new_password = ""
@@ -40,15 +40,19 @@ struct Users
   include JSON::Serializable
   property users : Hash(String, Scrypt::Password)
   forward_missing_to @users
-  def initialize(@users);end
+
+  def initialize(@users); end
+
   def initialize
     @users = Hash(String, Scrypt::Password).new
   end
+
   def self.read(from filepath : String)
     File.open filepath do |file|
       self.from_json file
     end
   end
+
   def write(to filepath : String)
     File.open filepath, mode: "w" do |file|
       to_json file
