@@ -8,13 +8,27 @@ module Flix
 
   class Configuration
     module HelpText
-      DIR  = "Set a media directory (can be specified multiple times)"
-      PORT = "set the port number on which the API should be accessible"
-      CONFIG_LOCATION = "set the config file location"
-      WEBROOT = "the location of the web app to serve"
-      PROCESSES = "the number of processes to use. UNSTABLE"
-      SIGN_IN_ENDPOINT = "the resource path to request a new authentication token"
-      DISABLE_AUTH = "make this instance totally public with no authentication requests"
+      DIR  = "\
+        Set a media directory (can be specified multiple times)
+        Default: #{Defaults.media_dirs.join}\n"
+      PORT = "\
+        set the port number on which the API should be accessible
+        Default: #{Defaults.port}\n"
+      CONFIG_LOCATION = "\
+        set the config file location
+        Default: #{Defaults.config_location}\n"
+      WEBROOT = "\
+        the location of the web app to serve
+        Default: #{Defaults.webroot}\n"
+      PROCESSES = "\
+        the number of processes to use. UNSTABLE
+        Default: 1\n"
+      SIGN_IN_ENDPOINT = "\
+        the resource path to request a new authentication token
+        Default: #{Defaults.sign_in_endpoint}\n"
+      DISABLE_AUTH = "\
+        make this instance totally public with no authentication requests
+        Default: false\n"
     end
     OPTIONS   = {:port, :webroot, :processes, :sign_in_endpoint}
 
@@ -29,7 +43,7 @@ module Flix
       disable_auth = nil
 
       OptionParser.parse args do |parser|
-        parser.banner = %<"flix": a streaming video server>
+        parser.banner = %<"flix": a streaming video server\n>
 
         parser.on "-d DIR", "--dir=DIR", HelpText::DIR do |dir|
           dirs << dir
@@ -62,6 +76,11 @@ module Flix
 
         parser.on "--no-auth", HelpText::DISABLE_AUTH do
           disable_auth = true
+        end
+
+        parser.on "-h", "--help", "Show this help message" do
+          puts parser
+          exit
         end
 
         parser.invalid_option do |flag|
