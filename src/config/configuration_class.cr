@@ -9,13 +9,14 @@ module Flix
       class_property webroot : String
       class_property config_location : String
       class_property media_dirs : Array(String)
-      class_property sign_in_endpoint  : String
+      class_property sign_in_endpoint : String
       class_property home_dir
       class_property port : UInt16
       @@webroot : String = ENV["flix_webroot"]? || File.join(File.dirname(Dir.current), "flix_webui", "build")
       @@config_location : String = ENV["flix_config"]? || File.join(config_home, "flix.cr")
       @@media_dirs : Array(String) = [File.join(@@home_dir, "Videos", "Public")]
       @@config_home : String? = nil
+
       def self.config_home : String
         if conf_home = ENV["XDG_CONFIG_HOME"]?
           # $XDG_CONFIG_HOME is set, use that as the config parent dir
@@ -45,6 +46,7 @@ module Flix
         end
         raise "couldn't find default config directory, please set the $XDG_CONFIG_HOME environment variable"
       end
+
       @@home_dir : String = (
         if home = ENV["HOME"]?
           home
@@ -58,7 +60,7 @@ module Flix
         end
       )
       @@sign_in_endpoint : String = "/sign_in"
-      @@port = 9999
+      @@port = 8080
     end
 
     property port : UInt16 = Defaults.port
@@ -87,6 +89,7 @@ module Flix
     #
     # As such, this feature is highly experimental, and disabled by default.
     setter processes : Int32?
+
     def processes=(other)
       @processes = other.to_i
     end
@@ -131,6 +134,10 @@ module Flix
       scan_dirs
     end
 
+	def metadata_config_loc
+	  File.join config_location, "metadata.yml"
+	end
+
     private macro scan_dirs
       @dirs.each do |dir|
         if (i_dir = Scanner::FileMetadata.from_file_path? dir) && i_dir.is_dir?
@@ -139,6 +146,10 @@ module Flix
       end
       @initialized_dirs.reject! &.nil?
       Flix::Scanner::FileMetadata.associate_thumbnails
+      @initialized_dirs = Flix::Scanner::Persistence::YAMLPersistence.new(
+		metadata_config_loc,
+		Flix::Scanner::Persistence::YAMLPersistence::ConfigSerializer.new(@initialized_dirs)
+	  ).sync!.media
     end
 
     private macro check_config_dir

@@ -4,6 +4,20 @@
 module Flix
   module Scanner
     class PhotoFile < FileMetadata
+      struct Serializer
+        property title : String
+        property location : String
+        def initialize(@title : String, @location : String);end
+      end
+      # copy values from a `Serializer` to `self`.
+      private macro deserialize(read)
+        %read = ({{read.id}})
+        @name = %read.title
+        @path = %read.location
+      end
+      def initialize(read : Serializer)
+        deserialize read
+      end
     end
   end
 end

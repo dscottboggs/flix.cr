@@ -10,7 +10,14 @@ module Flix
       @json_cache : String?
 
       delegate :size, to: @children_hash
+      property path
 
+      def initialize(@path : String,
+                     @name : String,
+                     @children = Array(FileMetadata).new,
+                     @thumbnail : PhotoFile? = nil,
+                     @stat : Crystal::System::FileInfo? = nil)
+      end
       def initialize(@path : String,
                      @children = Array(FileMetadata).new,
                      @thumbnail : PhotoFile? = nil,
@@ -54,7 +61,7 @@ module Flix
 
       def to_json(builder : JSON::Builder)
         builder.object do
-          # Flix.logger.debug "Adding title #{name.inspect} and thumbail #{thumbnail.inspect} to json"
+          # Flix.logger.debug "Adding title #{name.inspect} and thumbnail #{thumbnail.inspect} to json"
           builder.field "title", name
           builder.field "thumbnail", thumbnail.hash unless thumbnail.nil?
           each_child do |hash, child|
@@ -77,6 +84,35 @@ module Flix
       def is_dir?
         true
       end
+
+      # for persistence serializers
+
+      struct Serializer
+        property title : String
+        property thumbnail : PhotoFile?
+        property content : Set(MediaDirectory)
+        property location : String
+        def initialize(dir : MediaDirectory)
+          @title = dir.title
+          @thumbnail = dir.thumbnail if dir.thumbnail
+          @location = dir.path
+          @content = dir.children
+        end
+      end
+
+      def initialize(read : Serializer)
+        deserialize read
+      end
+
+      # copy values from a `Serializer` to `self`.
+      private macro deserialize(read)
+        %read = ({{read.id}})
+        @path = %read.location
+        @children = %read.content
+        @thumbnail = %read.thumbnail
+        @name = %read.title
+      end
+
     end
   end
 end
