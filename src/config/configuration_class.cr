@@ -2,6 +2,7 @@
 # Copyright (C) 2018 D. Scott Boggs
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
 require "logger"
+require "../persistence/yaml"
 
 module Flix
   class Configuration
@@ -134,9 +135,9 @@ module Flix
       scan_dirs
     end
 
-	def metadata_config_loc
-	  File.join config_location, "metadata.yml"
-	end
+    def metadata_config_loc
+      File.join config_location, "metadata.yml"
+    end
 
     private macro scan_dirs
       @dirs.each do |dir|
@@ -146,10 +147,10 @@ module Flix
       end
       @initialized_dirs.reject! &.nil?
       Flix::Scanner::FileMetadata.associate_thumbnails
-      @initialized_dirs = Flix::Scanner::Persistence::YAMLPersistence.new(
-		metadata_config_loc,
-		Flix::Scanner::Persistence::YAMLPersistence::ConfigSerializer.new(@initialized_dirs)
-	  ).sync!.media
+      @initialized_dirs = Flix::YAMLPersistence.new(
+		    metadata_config_loc,
+		    Flix::YAMLPersistence::YAMLSerializer.new(@initialized_dirs)
+	    ).media
     end
 
     private macro check_config_dir

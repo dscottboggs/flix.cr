@@ -7,7 +7,6 @@ require "logger"
 require "./config/*"
 require "./scanner/*"
 require "./routes"
-require "./scanner/persistence/yaml"
 
 module Flix
   VERSION = "0.1.0"

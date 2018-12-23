@@ -12,22 +12,47 @@
 # Please read the source code for this file as well as the YAML concrete
 # implementation at src/persistence/yaml.cr if you intend to use a similar
 # technique for a different serialization format.
-abstract class Flix::Scanner::Persistence
-  struct ConfigSerializer
-    property media : Array(MediaDirectory)
-    def initialize(@media);end
+abstract class Flix::Persistence
+  class ConfigSerializer
+    # define the relevant properties and initializers on a given type.
+    # E.G.:
+    # ```
+    # class YAMLSerializer < Flix::Persistence::ConfigSerializer
+    #   include ::YAML::Serializable
+    #   include ::YAML::Serializable::Strict
+    #   relevant_ivars
+    # end
+    # ```
+    # expands to this at compile time:
+    # ```
+    # class YAMLSerializer < Flix::Persistence::ConfigSerializer
+    #   include ::YAML::Serializable
+    #   include ::YAML::Serializable::Strict
+    #   property media : Array(Scanner::MediaDirectory)
+    #   def initialize(@media : Array(Scanner::MediaDirectory)); end
+    # end
+    # ```
+    # This will allow adding additional ivars if necessary in the future.
+    macro include_media
+      property media : Array(Scanner::MediaDirectory)
+      def initialize(@media : Array(Scanner::MediaDirectory)); end
+    end
     def merge(other : self)
       media.merge other.media
     end
   end
+
   property location : String
   property data : ConfigSerializer
+
   def initialize(@location, @data)
     sync!
   end
+
   def initialize(@location)
     @data = read
   end
+
   def sync!
     from_file = read
     @data.merge from_file
@@ -46,12 +71,12 @@ abstract class Flix::Scanner::Persistence
     # read a file from @location with a {{format.id}}-formatted configuration
     def read : self
       File.open @location do |file|
-        ConfigSerializer.from_{{format.id.downcase}} file
+        {{format.id}}Serializer.from_{{format.id.downcase}} file
       end
     end
 
     # write {{format.id}}-formatted data to a file at @location
-    def write(data) : ConfigSerializer
+    def write(data) : {{format.id.upcase}}Persistence::{{format.id}}Serializer
       File.open @location, mode: "w" do |file|
         data.to_{{format.id.downcase}} file
       end

@@ -18,6 +18,7 @@ module Flix
                      @thumbnail : PhotoFile? = nil,
                      @stat : Crystal::System::FileInfo? = nil)
       end
+
       def initialize(@path : String,
                      @children = Array(FileMetadata).new,
                      @thumbnail : PhotoFile? = nil,
@@ -90,8 +91,9 @@ module Flix
       struct Serializer
         property title : String
         property thumbnail : PhotoFile?
-        property content : Set(MediaDirectory)
+        property content : Array(FileMetadata)
         property location : String
+
         def initialize(dir : MediaDirectory)
           @title = dir.title
           @thumbnail = dir.thumbnail if dir.thumbnail
@@ -100,19 +102,13 @@ module Flix
         end
       end
 
-      def initialize(read : Serializer)
-        deserialize read
-      end
-
       # copy values from a `Serializer` to `self`.
-      private macro deserialize(read)
-        %read = ({{read.id}})
-        @path = %read.location
-        @children = %read.content
-        @thumbnail = %read.thumbnail
-        @name = %read.title
+      def initialize(read : Serializer)
+        @path = read.location
+        @children = read.content
+        @thumbnail = read.thumbnail
+        @name = read.title
       end
-
     end
   end
 end
