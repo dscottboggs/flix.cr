@@ -61,6 +61,11 @@ module Flix
       @@port = 9999
     end
 
+    @[Flags]
+    enum SerializationMode
+      YAML
+    end
+
     property port : UInt16 = Defaults.port
     # The directory to place the config file in. The config file contains
     # mappings of titles to filepaths, so you can override the title
@@ -94,6 +99,8 @@ module Flix
     property sign_in_endpoint : String = Defaults.sign_in_endpoint
     property allow_unauthorized : Bool = ENV["KEMAL_ENV"]? == "test"
 
+    property serialize_with : SerializationMode = SerializationMode::YAML
+
     def processes : Int
       @processes ||= ENV["flix_processes"]?.try &.to_i || 1
     rescue e : ArgumentError
@@ -106,6 +113,7 @@ module Flix
       @processes = processes.to_i
       @initialized_dirs = Array(Scanner::MediaDirectory).new
       scan_dirs
+      synchronize_with_disk
     end
 
     def users_file
@@ -131,6 +139,11 @@ module Flix
       scan_dirs
     end
 
+    def dirs=(dirs : Array(Scanner::MediaDirectory::Serialized))
+      @initialized_dirs = dirs.map { |dir| Scanner::Directory.deserialize dir }
+      @dirs = @initialized_dirs.map &.path
+    end
+
     private macro scan_dirs
       @dirs.each do |dir|
         if (i_dir = Scanner::FileMetadata.from_file_path? dir) && i_dir.is_dir?
@@ -146,6 +159,13 @@ module Flix
         raise "expected to find directory at #{@config_location}" unless File.directory? @config_location
       else
         Dir.mkdir_p @config_location
+      end
+    end
+
+    private macro synchronize_with_disk
+      break if serialize_with.none?
+      serialize_with.each do |mode|
+        dirs = YAML.sync! @dirs.serialize if mode.yaml?
       end
     end
   end

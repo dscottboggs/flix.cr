@@ -24,6 +24,23 @@ module Flix
         @name = FileMetadata.get_title_from @path
       end
 
+      abstract def serialize : self::Serialized
+      abstract def self.deserialize( self::Serialized ) : self
+
+      def same_path?(as other : self)
+        path === other.path
+      end
+
+      abstract def merge(with other : self) : self
+      def merge!(with other : self) : self
+        raise <<-HERE unless same_path? as: other
+        attempted to merge #{path} with #{other.path} which is a different
+        location
+        HERE
+        name = other.name
+        self
+      end
+
       # def self.from_file_path?(filepath : String) : self | Nil
       #   info = File.info? filepath
       #   self.new path: filepath, stat: info unless info.nil?

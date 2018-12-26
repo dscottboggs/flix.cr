@@ -30,7 +30,6 @@ module Flix
         make this instance totally public with no authentication requests
         Default: false\n"
     end
-    OPTIONS   = {:port, :webroot, :processes, :sign_in_endpoint}
 
     # Create a new Configuration from command-line arguments
     def self.from_args(args)
@@ -89,9 +88,11 @@ module Flix
           exit 64 # Usage exit code
         end
       end
+      dirs.reject! &.empty?
       dirs = Defaults.media_dirs if dirs.empty?
-      conf = new dirs: dirs.reject! &.empty?, config_location: (config_location || Defaults.config_location).not_nil!
-      {% for opt in OPTIONS %}
+      conf = new dirs: dirs, config_location: (config_location || Defaults.config_location).not_nil!
+      # assign each of these properties if they aren't null
+      {% for opt in {:port, :webroot, :processes, :sign_in_endpoint} %}
       if not_nil_{{opt.id}} = {{opt.id}}
         conf.{{opt.id}} = not_nil_{{opt.id}}
       end
