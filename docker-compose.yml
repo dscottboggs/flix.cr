@@ -1,12 +1,18 @@
 version: '3'
 services:
   flix.cr:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.with-ui
+    image: flix.cr:demo
     networks:
       - web
     volumes:
       - /home/scott/Videos/Public:/media:ro
       - ./config:/config
+    environment:
+      flix_first_user: demouser
+      flix_first_user_password: demopassword
     labels:
       traefik.docker.network: web
       traefik.enable: "true"
