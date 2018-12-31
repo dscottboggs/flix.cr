@@ -6,6 +6,7 @@ services:
       - web
     volumes:
       - /home/scott/Videos/Public:/media:ro
+      - ./config:/config
     labels:
       traefik.docker.network: web
       traefik.enable: "true"
