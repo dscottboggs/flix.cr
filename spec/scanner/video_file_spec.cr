@@ -1,3 +1,4 @@
+require "../spec_helper"
 describe Flix::Scanner::VideoFile do
   describe "#initialize" do
     it "works" do

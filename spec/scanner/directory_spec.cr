@@ -1,3 +1,4 @@
+require "../spec_helper"
 describe Flix::Scanner::MediaDirectory do
   test_obj = Flix::Scanner::FileMetadata.from_file_path? TEST_MEDIA_DIR
   describe ".from_file_path" do

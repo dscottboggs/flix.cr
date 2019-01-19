@@ -8,7 +8,7 @@ module Flix
 
   class Configuration
     module HelpText
-      DIR  = "\
+      DIR = "\
         Set a media directory (can be specified multiple times)
         Default: #{Defaults.media_dirs.join}\n"
       PORT = "\
@@ -30,7 +30,8 @@ module Flix
         make this instance totally public with no authentication requests
         Default: false\n"
     end
-    OPTIONS   = {:port, :webroot, :processes, :sign_in_endpoint}
+
+    OPTIONS = {:port, :webroot, :processes, :sign_in_endpoint}
 
     # Create a new Configuration from command-line arguments
     def self.from_args(args)
