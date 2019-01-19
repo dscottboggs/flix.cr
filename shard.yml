@@ -21,10 +21,6 @@ dependencies:
   # bindings to LibMagic (a.k.a. the `file(1)` command); gets filetypes
   magic:
     github: dscottboggs/magic.cr
-  # authentication middleware
-  kemal-auth-token:
-    github: dscottboggs/kemal-auth-token
-    branch: fixes
   # for hashing passwords
   scrypt:
     github: ysbaddaden/scrypt-crystal

@@ -23,12 +23,6 @@ module Flix
       PROCESSES = "\
         the number of processes to use. UNSTABLE
         Default: 1\n"
-      SIGN_IN_ENDPOINT = "\
-        the resource path to request a new authentication token
-        Default: #{Defaults.sign_in_endpoint}\n"
-      DISABLE_AUTH = "\
-        make this instance totally public with no authentication requests
-        Default: false\n"
     end
 
     OPTIONS = {:port, :webroot, :processes, :sign_in_endpoint}
@@ -41,7 +35,6 @@ module Flix
       sign_in_endpoint = nil
       config_location = nil
       dirs = [] of String
-      disable_auth = nil
 
       OptionParser.parse args do |parser|
         parser.banner = %<"flix": a streaming video server\n>
@@ -71,14 +64,6 @@ module Flix
           processes = procs
         end
 
-        parser.on "--sign-in-endpoint=PATH", HelpText::SIGN_IN_ENDPOINT do |path|
-          sign_in_endpoint = path
-        end
-
-        parser.on "--no-auth", HelpText::DISABLE_AUTH do
-          disable_auth = true
-        end
-
         parser.on "-h", "--help", "Show this help message" do
           puts parser
           exit
@@ -97,7 +82,6 @@ module Flix
         conf.{{opt.id}} = not_nil_{{opt.id}}
       end
       {% end %}
-      conf.allow_unauthorized if disable_auth == true
       raise "port cannot be 0" if port == 0
       conf
     end

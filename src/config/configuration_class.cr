@@ -9,7 +9,6 @@ module Flix
       class_property webroot : String
       class_property config_location : String
       class_property media_dirs : Array(String)
-      class_property sign_in_endpoint : String
       class_property home_dir
       class_property port : UInt16
       @@webroot : String = ENV["flix_webroot"]? || File.join(File.dirname(Dir.current), "flix_webui", "build")
@@ -59,7 +58,6 @@ module Flix
           "" # intentionally breaks things later
         end
       )
-      @@sign_in_endpoint : String = "/sign_in"
       @@port = 9999
     end
 
@@ -94,9 +92,6 @@ module Flix
       @processes = other.to_i
     end
 
-    property sign_in_endpoint : String = Defaults.sign_in_endpoint
-    property allow_unauthorized : Bool = ENV["KEMAL_ENV"]? == "test"
-
     def processes : Int
       @processes ||= ENV["flix_processes"]?.try &.to_i || 1
     rescue e : ArgumentError
@@ -109,10 +104,6 @@ module Flix
       @processes = processes.to_i
       @initialized_dirs = Array(Scanner::MediaDirectory).new
       scan_dirs
-    end
-
-    def users_file
-      File.join @config_location, "users.auth"
     end
 
     def logger : Logger

@@ -4,7 +4,6 @@
 require "kemal"
 require "kemal-auth-token"
 require "./routes/*"
-require "./auth"
 require "./scanner/mime_type"
 
 module Flix
@@ -16,16 +15,11 @@ module Flix
   end
 
   private def do_serve_up
-    add_handler Authentication::Handler.new
     error 404 { "404 not found.\r\n" }
     error 403 { "Forbidden.\r\n" }
     get("/ping") { "pong" }
     # output a representation of the file structure
-    get "/dmp" do |ctx|
-      next unless user_found?(ctx)
-      Flix.logger.debug "got user #{ctx.current_user.inspect}"
-      Flix.config.dirs.to_json
-    end
+    get("/dmp") { Flix.config.dirs.to_json }
     # serve an image
     get "/img", &serve_img
     get "/img/:id", &serve_img
@@ -55,8 +49,6 @@ module Flix
   def serve_img : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
-      return unless user_found?(context)
-      Flix.logger.debug context.current_user
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
@@ -82,7 +74,6 @@ module Flix
   def serve_video : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
-      return unless user_found?(context)
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
@@ -101,14 +92,6 @@ module Flix
     end
   end
 
-  def user_found?(context)
-    if context.current_user.try(&.["name"]?) || Flix.config.allow_unauthorized
-      true
-    else
-      context.response.status_code = 403
-      false
-    end
-  end
 
   macro page_not_found
     context.response.status_code = 404
