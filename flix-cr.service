@@ -1,0 +1,11 @@
+[Unit]
+Description="the Crystal media server demo site"
+Requires=docker-public-network.service
+
+[Service]
+Restart=on-failure
+RestartSec=5
+ExecStart=/usr/local/bin/docker-compose --file /home/scott/Documents/code/flix/docker-compose.yml up --build
+
+[Install]
+WantedBy=multi-user.target
