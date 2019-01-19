@@ -3,6 +3,7 @@ FROM node:8-alpine as webui
 RUN apk add git &&\
     git clone https://github.com/dscottboggs/flix-webui.git /flix-webui &&\
     cd /flix-webui &&\
+    git checkout noauth &&\
     npm install &&\
     npm run build
 # run the normal build process
