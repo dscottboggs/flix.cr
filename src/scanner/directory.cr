@@ -9,7 +9,7 @@ module Flix
       @children_hash = Hash(String, FileMetadata).new
       @json_cache : String?
 
-      delegate :size, to: @children_hash
+      delegate :size, "[]", "[]?", "[]=", to: @children_hash
 
       def initialize(@path : String,
                      @children = Array(FileMetadata).new,

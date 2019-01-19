@@ -35,5 +35,5 @@ module Flix
     end
   end
 
-  serve_up # unless ENV["FLIX_DEBUG"]?
+  serve_up
 end

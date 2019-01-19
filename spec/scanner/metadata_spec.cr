@@ -1,3 +1,4 @@
+require "../spec_helper"
 describe Flix::Scanner::FileMetadata do
   describe ".get_title_from" do
     test_values = {

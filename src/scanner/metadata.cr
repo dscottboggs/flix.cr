@@ -7,8 +7,8 @@ require "./mime_type"
 module Flix
   module Scanner
     abstract class FileMetadata
-      @@all_videos = Hash(String, VideoFile).new
-      @@all_photos = Hash(String, PhotoFile).new
+      class_property all_videos = Hash(String, VideoFile).new
+      class_property all_photos = Hash(String, PhotoFile).new
       property path : String
       @name : String?
       setter name : String
@@ -94,6 +94,13 @@ module Flix
       def mime_type
         @mime_type ||= MimeType.of path
       end
+
+      def textual_mime_type
+        if mt = mime_type
+          mt.to_s
+        end
+      end
+
 
       # Uses some heuristics to parse a human-readable title from some common
       # filename conventions.
@@ -212,22 +219,6 @@ module Flix
         @@all_{{filetype.id}}s[{{filetype.id}}.hash] = {{filetype.id}}
       end
       {% end %}
-
-      def self.all_videos
-        if @@all_videos.empty?
-          # Flix.logger.warn "empty list of videos"
-        end
-        # Flix.logger.debug "all_videos: #{@@all_videos.inspect}"
-        @@all_videos
-      end
-
-      def self.all_photos
-        if @@all_photos.empty?
-          # Flix.logger.warn "empty list of photos"
-        end
-        # Flix.logger.debug "all_photos: #{@@all_photos.inspect}"
-        @@all_photos
-      end
 
       # run this once all the photos and videos are found. It assigns any photo
       # with the same name (file basename formatted with `#get_title_from`) as a
