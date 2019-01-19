@@ -77,6 +77,16 @@ in the spirit of the first two:
 |--------|---------------------------------------------------------------------|
 | `/srt` | Requires a "id" URL parameter, like `/srt?id={value}`, where "id" is the unique identifier specified in the /titles endpoint. Returns a subtitle file (.srt) |
 
+## Testing
+
+The tests will deadlock unless you set `KEMAL_ENV=test`. For example, to run all
+tests with verbose output, run
+
+```shell
+KEMAL_ENV=test crystal spec --progress -v
+```
+Port 3000 must be available to run the specs.
+
 ## Contributing
 
 1. Fork it (https://github.com/dscottboggs/flix.cr.git)
