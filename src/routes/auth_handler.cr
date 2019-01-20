@@ -41,7 +41,7 @@ class Flix::Authentication::Handler < Kemal::Handler
   end
 
   private def load_user(from context : HTTP::Server::Context) : Void
-    if token = context.request.headers["X-Token"]?
+    if token = (context.request.headers["X-Token"]? || context.params.query["auth"]?)
       payload, header = decode jwt: token
       context.current_user = User.load user_info: payload
     end
