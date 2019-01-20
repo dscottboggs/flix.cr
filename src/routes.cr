@@ -32,6 +32,9 @@ module Flix
     # serve a video
     get "/vid", &serve_video
     get "/vid/:id", &serve_video
+    # serve metadata
+    get "/nfo", &metadata
+    get "/nfo/:id", &metadata
 
     # the webroot for the server
     get "/" { |context| context.redirect "/index.html" }
@@ -48,6 +51,26 @@ module Flix
         else
           raise "got nil server! look at config class"
         end
+      end
+    end
+  end
+
+  # this method returns the Proc which gets called when the /nfo endpoint is
+  # reached.
+  def metadata
+    ->(context : HTTP::Server::Context) do
+      return unless user_found? context
+      id = context.params.url["id"]? || context.params.query["id"]?
+      if id.nil?
+        page_not_found
+        return
+      end
+      if video = Scanner::FileMetadata.all_videos[id]?
+        video.nfo.to_json
+      elsif photo = Scanner::FileMetadata.all_photos[id]?
+        photo.nfo.to_json
+      else
+        page_not_found
       end
     end
   end
