@@ -120,7 +120,7 @@ module Flix
       end
       nil
   rescue e : Errno
-    raise e unless {Errno::EPIPE, Errno::ECONNRESET}.includes?(e.errno)
+    raise e unless {Errno::EPIPE, Errno::ECONNRESET}.includes? e.errno
     end
   end
 
