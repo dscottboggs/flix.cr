@@ -10,6 +10,7 @@ WARNING = %<#{"ARE YOU SURE".colorize(:red).mode(:bold)} #{"YOU WANT TO DELETE T
 module UserModifications
   SALT_SIZE  =  32
   KEY_LENGTH = 512 # Maximum allowed values
+  ACTION_ALIASES = ["add", "new", "create", "change", "delete", "rm", "remove"]
   @@username = ""
   @@old_password = ""
   @@new_password = ""
@@ -18,7 +19,11 @@ module UserModifications
 
   def self.parse_args(args = ARGV)
     OptionParser.parse args do |parser|
-      parser.banner = "Flix user modification scripts"
+      parser.banner = <<-HERE
+      Flix user modification scripts
+      Usage: scripts/user_modifications [ACTION] [ [OPTIONS] ... ]
+      Where ACTION is one of #{ACTION_ALIASES.inspect} and OPTIONS are chosen from:
+	  HERE
 
       parser.on "-f PATH", "--file PATH", "the path to the users file to change" do |path|
         @@config_path = path
@@ -113,7 +118,7 @@ module UserModifications
       users.delete @@username
       users.write @@config_path
     else
-      abort message: %<Invalid action #{action}. Must be one of: "add", "new", "create", "change", "delete" "rm", or "remove"\n#{@@help_msg}>
+      abort message: %<Invalid action #{action}. Must be one of: #{ACTION_ALIASES.inspect}\n#{@@help_msg}>
     end
   end
 end
