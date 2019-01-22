@@ -14,6 +14,7 @@ module Flix
       class_property sign_in_endpoint : String
       class_property home_dir
       class_property port : UInt16
+      class_property debug = !!ENV["flix_debug"]?
       @@webroot : String = ENV["flix_webroot"]? || File.join(File.dirname(Dir.current), "flix_webui", "build")
       @@config_location : String = ENV["flix_config"]? || File.join(config_home, "flix.cr")
       @@media_dirs : Array(String) = [File.join(@@home_dir, "Videos", "Public")]
@@ -73,7 +74,7 @@ module Flix
     property config_location : String = Defaults.config_location
     # If the "flix_debug" environment variable is set to any value, or this
     # property is set, extra logging information will be sent to stdout.
-    property debug = !!ENV["flix_debug"]?
+    property debug : Bool = Defaults.debug
     # The absolute path of the web interface to use for this server instance.
     # The default is to check the "flix_webroot" environment variable, or to
     # fall back on the absolute path of the directory at
@@ -127,8 +128,10 @@ module Flix
     end
 
     property log_file : IO = STDOUT
-    property log_level : Logger::Severity = Logger::DEBUG
-
+    setter log_level : Logger::Severity?
+    def log_level
+      @log_level ||= debug ? Logger::DEBUG : Logger::INFO
+    end
     # A central interface for debug and admin log messages.
     def logger : Logger
       @logger ||= Logger.new io: log_file, level: log_level
