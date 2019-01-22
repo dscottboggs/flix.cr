@@ -123,12 +123,14 @@ module Flix
         end
         # replace underscores or dots, depending on which has more
         if underscores > 0 || dots > 0
+          subchar = if underscores > dots
+                      '_'
+                    else
+                      '.'
+                    end
           return filename
-            .gsub('_', ' ')
-            .gsub(/\s+/, " ")
-            .strip if underscores > dots
-          return filename
-            .gsub('.', ' ')
+            .gsub(/\\#{subchar}([a-zA-Z])/) { |ss, match| " " + match[0].upcase }
+            .gsub(subchar, ' ')
             .gsub(/\s+/, " ")
             .strip
         end
@@ -136,6 +138,7 @@ module Flix
         filename = filename.gsub '-', " -"
         subs = Hash(Char, Char | String).new
         ('A'..'Z').each { |l| subs[l] = " " + l }
+        filename = filename.sub 0, filename[0].upcase
 
         filename.gsub(subs).strip
       end
