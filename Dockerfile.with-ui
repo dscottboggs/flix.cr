@@ -36,4 +36,6 @@ RUN /usr/bin/crystal build --release --static -o /usr/local/bin/flix src/flix.cr
 
 COPY --from=webui /flix-webui/build /webui
 
+RUN ln -s /flix.cr/docs /webui/
+
 ENTRYPOINT /flix.cr/docker-entrypoint.sh
