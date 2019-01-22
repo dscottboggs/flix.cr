@@ -29,6 +29,12 @@ class Flix::Authentication::Handler < Kemal::Handler
     return sign_in with: context if context.request.path === Flix.config.sign_in_endpoint
     load_user from: context
     call_next context
+  rescue e : JWT::VerificationError
+    Flix.logger.debug e.message
+    context.response.status_code = 403
+    context.response.content_type = "text/plain"
+    context.response.puts "Bad JWT. Reauthenticate."
+    # do not call the next context
   end
 
   # Authenticate a user from JSON-encoded credentials in the request body,
