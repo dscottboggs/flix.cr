@@ -8,8 +8,8 @@ include FileUtils
 WARNING = %<#{"ARE YOU SURE".colorize(:red).mode(:bold)} #{"YOU WANT TO DELETE THE #{"ONLY".colorize(:red)} USER?".colorize.mode(:bold)}>
 
 module UserModifications
-  SALT_SIZE  =  32
-  KEY_LENGTH = 512 # Maximum allowed values
+  SALT_SIZE      =  32
+  KEY_LENGTH     = 512 # Maximum allowed values
   ACTION_ALIASES = ["add", "new", "create", "change", "delete", "rm", "remove"]
   @@username = ""
   @@old_password = ""

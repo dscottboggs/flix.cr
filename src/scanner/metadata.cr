@@ -6,6 +6,8 @@ require "./mime_type"
 
 module Flix
   module Scanner
+    # The interface that all directory and media files implement and default
+    # methods on those files.
     abstract class FileMetadata
       class_property all_videos = Hash(String, VideoFile).new
       class_property all_photos = Hash(String, PhotoFile).new

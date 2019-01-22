@@ -1,10 +1,12 @@
 # Flix -- A media server in the Crystal Language with Kemal.cr
 # Copyright (C) 2018 D. Scott Boggs
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
+
 require "logger"
 
 module Flix
   class Configuration
+    # The default values of each configuration options.
     struct Defaults
       class_property webroot : String
       class_property config_location : String
@@ -47,7 +49,7 @@ module Flix
         raise "couldn't find default config directory, please set the $XDG_CONFIG_HOME environment variable"
       end
 
-      @@home_dir : String = (
+      @@home_dir = (
         if home = ENV["HOME"]?
           home
         elsif (user = ENV["USER"]?) && File.directory?(home1 = "/home/#{user}")
@@ -59,7 +61,7 @@ module Flix
           "" # intentionally breaks things later
         end
       )
-      @@sign_in_endpoint : String = "/sign_in"
+      @@sign_in_endpoint = "/sign_in"
       @@port = 9999
     end
 
@@ -79,6 +81,7 @@ module Flix
     property webroot : String = Defaults.webroot
     @logger : Logger?
     @initialized_dirs : Array(Scanner::MediaDirectory)
+
     # Setting this higher than 1 sets Kemal to "reuse_port", and causes the given
     # number of forks before starting Kemal, effectively allowing multiprocess
     # serving.
@@ -90,18 +93,22 @@ module Flix
     # As such, this feature is highly experimental, and disabled by default.
     setter processes : Int32?
 
-    def processes=(other)
-      @processes = other.to_i
-    end
-
-    property sign_in_endpoint : String = Defaults.sign_in_endpoint
-    property allow_unauthorized : Bool = ENV["KEMAL_ENV"]? == "test"
-
+    # :ditto:
     def processes : Int
       @processes ||= ENV["flix_processes"]?.try &.to_i || 1
     rescue e : ArgumentError
       @processes = 1
     end
+
+    # :ditto:
+    def processes=(other)
+      @processes = other.to_i
+    end
+
+    # The path on which to POST sign in info to request a new JWT.
+    property sign_in_endpoint : String = Defaults.sign_in_endpoint
+    # Setting this to true disables authentication entirely.
+    property allow_unauthorized : Bool = ENV["KEMAL_ENV"]? == "test"
 
     def initialize(@config_location : String = Defaults.config_location,
                    @dirs = Defaults.media_dirs)
@@ -111,33 +118,39 @@ module Flix
       scan_dirs
     end
 
-    def users_file
-      File.join @config_location, "users.auth"
+    # The file where authentication tokens are stored
+    setter users_file : String?
+
+    # :ditto:
+    def users_file : String
+      @users_file ||= File.join @config_location, "users.auth"
     end
 
+    property log_file : IO = STDOUT
+    property log_level : Logger::Severity = Logger::DEBUG
+
+    # A central interface for debug and admin log messages.
     def logger : Logger
-      if @logger.nil?
-        @logger = Logger.new STDOUT, level: Logger::DEBUG
-      else
-        @logger.not_nil!
-      end
+      @logger ||= Logger.new io: log_file, level: log_level
     end
 
+    # The scanned and initialized root Scanner::MediaDirectory.
     def dirs : Array(Scanner::MediaDirectory)
       @initialized_dirs
     end
 
-    # An array of valid directories that contain valid media files. Currently
-    # supported media types are defined by the Flix::Scanner::MimeType enum.
+    # An array of paths to valid directories that contain valid media files.
+    # Currently supported media types are defined by the Flix::Scanner::MimeType
+    # enum.
     def dirs=(@dirs : Array(String))
       @initialized_dirs = Array(Scanner::MediaDirectory).new
       scan_dirs
     end
 
     private def scan_dirs
-      @dirs.each do |dir|
-        if (i_dir = Scanner::FileMetadata.from_file_path? dir) && i_dir.is_dir?
-          @initialized_dirs << i_dir.as(Scanner::MediaDirectory)
+      @dirs.each do |dirpath|
+        if (dir = Scanner::FileMetadata.from_file_path? dirpath) && dir.is_dir?
+          @initialized_dirs << dir.as Scanner::MediaDirectory
         end
       end
       @initialized_dirs.reject! &.nil?
@@ -145,8 +158,8 @@ module Flix
     end
 
     private def check_config_dir
-      if File.exists? @config_location
-        raise "expected to find directory at #{@config_location}" unless File.directory? @config_location
+      if (File.exists? @config_location) && !(File.directory? @config_location)
+        raise "expected to find directory at #{@config_location}"
       else
         Dir.mkdir_p @config_location
       end

@@ -1,5 +1,6 @@
 require "./handler"
 
+# A minimal example of a Kemal handler
 class Flix::PingHandler < Flix::Handler
   only ["/ping"]
 

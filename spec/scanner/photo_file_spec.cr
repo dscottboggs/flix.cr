@@ -7,8 +7,12 @@ describe Flix::Scanner::PhotoFile do
   end
   describe ".from_file_path" do
     it "works" do
-      test_obj = Flix::Scanner::PhotoFile.from_file_path? TEST_FILES[:image_one].path
-      test_obj.should be_nil
+      if test_obj = Flix::Scanner::PhotoFile.from_file_path? TEST_FILES[:image_one].path
+        test_obj.mime_type!.is_a_photo?.should be_true
+        test_obj.path.should eq TEST_FILES[:image_one].path
+      else
+        fail "Flix::Scanner::PhotoFile.from_file_path? TEST_FILES[:image_one].path was nil"
+      end
     end
   end
 end

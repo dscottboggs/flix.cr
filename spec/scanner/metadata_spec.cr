@@ -4,7 +4,8 @@ struct TestEntry
   property original : String
   property expected : String
   property kind : String
-  def initialize(@original, @expected, @kind);end
+
+  def initialize(@original, @expected, @kind); end
 end
 
 describe Flix::Scanner::FileMetadata do
@@ -18,7 +19,7 @@ describe Flix::Scanner::FileMetadata do
       TestEntry.new("Test.String.-.The.Testening.mp4", "Test String - The Testening", "dot separated"),
       TestEntry.new("Title.For.Dot-Separated.Dir.With.Long.Final.Substring", "Title For Dot-Separated Dir With Long Final Substring", "dot-separated"),
       TestEntry.new("Test Filename with Spaces.mp4", "Test Filename with Spaces", "with spaces"),
-      TestEntry.new("testString", "Test String", "camel case")
+      TestEntry.new("testString", "Test String", "camel case"),
     ]
     test_values.each do |entry|
       it "handles format '#{entry.kind}' (example #{entry.original})" do

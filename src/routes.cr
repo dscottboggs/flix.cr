@@ -10,6 +10,7 @@ require "./scanner/mime_type"
 module Flix
   extend self
 
+  # Begin serving the application
   def serve_up
     (config.processes - 1).times { fork { do_serve_up } }
     do_serve_up
@@ -75,6 +76,8 @@ module Flix
     end
   end
 
+  # this method returns the Proc which gets called when the /img endpoint is
+  # reached.
   def serve_img : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
@@ -102,6 +105,8 @@ module Flix
     end
   end
 
+  # this method returns the Proc which gets called when the /vid endpoint is
+  # reached.
   def serve_video : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
@@ -124,6 +129,9 @@ module Flix
     end
   end
 
+  # Returns true if the user is found or if
+  # Flix::Configuration.allow_unauthorized is set. Otherwise, sets the status
+  # to *403 Forbidden* and returns false.
   def user_found?(context)
     if context.current_user.try(&.["name"]?) || Flix.config.allow_unauthorized
       true
@@ -133,6 +141,7 @@ module Flix
     end
   end
 
+  # Set the status code and render an appropriate 404 Not Found.
   macro page_not_found
     context.response.status_code = 404
     render_404

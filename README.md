@@ -3,6 +3,10 @@
 WIP Media server in crystal/kemal.
 Serves videos from one or more directories with a ReactJS web app or over a simple API.
 
+A demo site hosting some public-domain videos is available at
+[demo.flix.tams.tech](https://demo.flix.tams.tech/index.html). The username is
+*demouser* and the password is *demopass*.
+
 ## Installation
 
 Crystal allows compiling to a single self-contained executable. I'll drop one of
@@ -59,31 +63,30 @@ item. Thumbnail images can be retrieved with this endpoint:
 
 | endpoint | action       |
 |--------|---------------------------------------------------------------------|
-| `/img` | Requires a "id" URL parameter, like `/img?id={value}`, where id is the unique identifier returned by the /titles endpoint. Returns the image as a blob. |
+| `/img` | Requires a "id" URL parameter, like `/img?id={value}`, where id is the unique identifier returned by the /dmp endpoint. Returns the image as a blob. |
 | `/img/{id value}` | The id can be placed directly in the URL path, like so.|
 
 And it's the same with the videos:
 
 | endpoint | action       |
 |--------|---------------------------------------------------------------------|
-| `/vid` | Requires a "id" URL parameter, like `/vid?id={value}`, where "id" is the unique identifier specified in the /titles endpoint. Returns the raw mp4 video stream. |
+| `/vid` | Requires a "id" URL parameter, like `/vid?id={value}`, where "id" is the unique identifier specified in the /dmp endpoint. Returns the raw mp4 video stream. |
 | `/vid/{id value}` | The id can be placed directly in the URL path, like so.|
 
 So just by knowing that unique ID, you can access all the public-facing
-attributes for that video. When I add subtitles, there will be this endpoint
-in the spirit of the first two:
+attributes for that video. The `/nfo` endpoint provides some metadata for a video:
 
 | endpoint | action       |
 |--------|---------------------------------------------------------------------|
-| `/srt` | Requires a "id" URL parameter, like `/srt?id={value}`, where "id" is the unique identifier specified in the /titles endpoint. Returns a subtitle file (.srt) |
+| `/nfo` | Requires a "id" URL parameter, like `/nfo?id={value}`, where "id" is the unique identifier specified in the /dmp endpoint. Returns JSON-encoded metadata. |
 
 ## Testing
 
-The tests will deadlock unless you set `KEMAL_ENV=test`. For example, to run all
-tests with verbose output, run
+The tests will deadlock unless you set the `KEMAL_ENV` environment variable to
+`test`. For example, to run all tests with verbose output, run
 
 ```shell
-KEMAL_ENV=test crystal spec --progress -v
+KEMAL_ENV=test crystal spec -v
 ```
 Port 3000 must be available to run the specs.
 

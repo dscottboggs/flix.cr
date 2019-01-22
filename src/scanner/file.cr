@@ -8,6 +8,8 @@ module Flix
   module Scanner
     extend self
 
+    # get the unique hash for the given filepath
+    # the filepath string is MD5 hashed, then base64 encoded and trimmed.
     def hash(filepath : String)
       digest = Digest::MD5.digest(filepath).to_slice
       hash_size = digest.size/2
@@ -18,6 +20,8 @@ module Flix
       Base64.urlsafe_encode(hash_value).strip('=')
     end
 
+    # this only escapes double-quote characters. That seems inadequate, but
+    # perhaps it is adequate. TODO SECURITY check
     def command_escape(filepath : String)
       String.build do |s|
         filepath.each_char do |char|
