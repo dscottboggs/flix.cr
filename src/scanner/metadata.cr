@@ -95,12 +95,16 @@ module Flix
         @mime_type ||= MimeType.of path
       end
 
+      def mime_type!
+        @mime_type ||= MimeType.of! path
+      end
+
+      # The mime type of the current file as a string
       def textual_mime_type
         if mt = mime_type
           mt.to_s
         end
       end
-
 
       # Uses some heuristics to parse a human-readable title from some common
       # filename conventions.
@@ -144,76 +148,52 @@ module Flix
       end
 
       def self.from_file_path?(filepath : String, stat : Crystal::System::FileInfo? = nil) : FileMetadata?
-        # TODO: This null check should probably be done differently because it
-        # technically could raise an exception but it works for now. I don't
-        # want to wrap the whole method in a conditional, that gets messy.
-        possibly_nil_info = stat || File.info? filepath
-        return if possibly_nil_info.nil?
-        info = possibly_nil_info.not_nil!
-        if info.file? && MimeType.of(filepath).try &.is_a_video?
-          # we got a video file!
-          # Flix.logger.debug "\
-          #   got video at #{filepath} in \
-          #   Flix::Scanner::FileMetadata.from_file_path?"
-          return VideoFile.new path: filepath, stat: info
-        end
-        unless info.directory?
-          # Flix.logger.warn "got unrecognized file at #{filepath}"
-          return
-        end
-        thumb : PhotoFile? = nil
-        videos_in_this_dir : UInt64 = 0
-        photos_in_this_dir : UInt64 = 0
-        children_dir_count : UInt64 = 0
-        out_dir = MediaDirectory.new path: filepath, stat: info
-        # Flix.logger.debug "\
-        #   got directory at #{filepath} in \
-        #   Flix::Scanner::FileMetadata.from_file_path?"
-
-        Dir.open filepath, &.each_child do |file|
-          fullpath = File.join(filepath, file)
-          info = File.info fullpath
-
-          if MimeType.of(fullpath).try &.is_a_photo?
-            photos_in_this_dir += 1
-            FileMetadata << PhotoFile.new path: fullpath, stat: info
-            next
-          end
-          # debugger
-
-          if new_file = from_file_path? fullpath
-            if MimeType.of(new_file.path) === MimeType::Directory
-              # Flix.logger.debug "\
-              #   found child dir at #{fullpath} in directory #{filepath} in \
-              #   Flix::Scanner::FileMetadata.from_file_path?"
-              new_file.parent = out_dir
-              out_dir << new_file.as MediaDirectory
-              children_dir_count += 1
-            elsif MimeType.of(new_file.path).try &.is_a_video?
-              # Flix.logger.debug "\
-              #   found child video at #{fullpath} in directory #{filepath} in \
-              #   Flix::Scanner::FileMetadata.from_file_path?"
-              videos_in_this_dir += 1
-              new_file.parent = out_dir
-              out_dir << new_file.as VideoFile
-              FileMetadata << new_file.as VideoFile
-            else
-              # Flix.logger.warn %<got unexpected filetype "#{Magic.mime_type.of(fullpath)}" @#{fullpath.inspect}>
+        if info = File.info? filepath # skip everything if the file is not valid
+          if info.file? && (mime_type = MimeType.of filepath)
+            if mime_type.is_a_video?
+              # we got a video file!
+              return VideoFile.new path: filepath, stat: info
+            elsif mime_type.is_a_photo?
+              # we got a picture!
+              return PhotoFile.new path: filepath, stat: info
             end
           end
-        end
+          return unless info.directory?
+          videos_in_this_dir : UInt64 = 0
+          photos_in_this_dir : UInt64 = 0
+          children_dir_count : UInt64 = 0
+          out_dir = MediaDirectory.new path: filepath, stat: info
 
-        # returns the first video in out_dir's children if out_dir only has one child video.
-        if videos_in_this_dir == 1 && (kids = out_dir.children) && kids.size == 1
-          # Flix.logger.debug "\
-          #   only found one child video at #{out_dir.children.not_nil!.first_value} in \
-          #   directory #{filepath} in \
-          #   Flix::Scanner::FileMetadata.from_file_path?; returning that video\
-          #   instead of the directory at #{filepath}.\n"
-          return out_dir.children.not_nil!.first_value
+          # time to figure out what all the children files are in this directory
+          Dir.open filepath, &.each_child do |file|
+            fullpath = File.join(filepath, file)
+            info = File.info fullpath
+
+            if new_file = from_file_path? fullpath
+              case new_file.mime_type
+              when nil then nil
+              when .is_a_dir?
+                new_file.parent = out_dir
+                out_dir << new_file.as MediaDirectory
+                children_dir_count += 1
+              when .is_a_photo?
+                photos_in_this_dir += 1
+                FileMetadata << new_file.as PhotoFile
+              when .is_a_video?
+                videos_in_this_dir += 1
+                new_file.parent = out_dir
+                out_dir << new_file.as VideoFile
+                FileMetadata << new_file.as VideoFile
+              end
+            end
+          end
+
+          # returns the first video in out_dir's children if out_dir only has one child video.
+          if videos_in_this_dir == 1 && (kids = out_dir.children) && kids.size == 1
+            return kids.first_value
+          end
+          out_dir
         end
-        out_dir.thumbnail = thumb unless thumb.nil?
-        out_dir
       end
 
       {% for filetype in {:video, :photo} %}

@@ -57,7 +57,7 @@ enum Flix::Scanner::MimeType
   end
 
   def self.of!(path)
-    self.of_file(path) || raise %<unknown mime "#{string}" for "#{path}",.>
+    self.of(path) || raise %<unknown mime "#{Magic.mime_type.of? path}" for "#{path}",.>
   end
 
   def is_a_video?
@@ -66,5 +66,9 @@ enum Flix::Scanner::MimeType
 
   def is_a_photo?
     PHOTO_FILE_TYPES.includes? self
+  end
+
+  def is_a_dir?
+    self === Directory
   end
 end
