@@ -29,7 +29,7 @@ class Flix::Authentication::Handler < Kemal::Handler
     return sign_in with: context if context.request.path === Flix.config.sign_in_endpoint
     load_user from: context
     call_next context
-  rescue e : JWT::VerificationError
+  rescue e : JWT::Error
     Flix.logger.debug e.message
     context.response.status_code = 403
     context.response.content_type = "text/plain"
