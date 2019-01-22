@@ -41,6 +41,7 @@ module Flix
     get "/" { |context| context.redirect "/index.html" }
 
     public_folder config.webroot
+    Kemal.config.env = "production" unless Flix.config.debug
     if (env = ENV["KEMAL_ENV"]?) && (env == "test")
       # kemal-spec only works like this
       Kemal.run
