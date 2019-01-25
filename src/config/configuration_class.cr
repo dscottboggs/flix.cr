@@ -11,9 +11,9 @@ module Flix
       class_property webroot : String
       class_property config_location : String
       class_property media_dirs : Array(String)
-      class_property sign_in_endpoint : String
+      class_property sign_in_endpoint = "/sign_in"
       class_property home_dir
-      class_property port : UInt16
+      class_property port = 9999
       class_property debug = !!ENV["flix_debug"]?
       @@webroot : String = ENV["flix_webroot"]? || File.join(File.dirname(Dir.current), "flix_webui", "build")
       @@config_location : String = ENV["flix_config"]? || File.join(config_home, "flix.cr")
@@ -62,8 +62,6 @@ module Flix
           "" # intentionally breaks things later
         end
       )
-      @@sign_in_endpoint = "/sign_in"
-      @@port = 9999
     end
 
     property port : UInt16 = Defaults.port
@@ -110,6 +108,12 @@ module Flix
     property sign_in_endpoint : String = Defaults.sign_in_endpoint
     # Setting this to true disables authentication entirely.
     property allow_unauthorized : Bool = ENV["KEMAL_ENV"]? == "test"
+
+    property key_file : String?
+    property cert_file : String?
+    def use_ssl?
+      key_file && cert_file
+    end
 
     def initialize(@config_location : String = Defaults.config_location,
                    @dirs = Defaults.media_dirs)

@@ -31,9 +31,25 @@ module Flix
       DISABLE_AUTH = "\
         make this instance totally public with no authentication requests
         Default: false\n"
+      SSL_KEY_FILE = "\
+        the path to the SSL key file.\
+        Default: nil"
+      SSL_CERT_FILE = "\
+        the path to the SSL cert file\
+        Default: nil"
     end
 
-    OPTIONS = {:port, :webroot, :processes, :sign_in_endpoint}
+    class CertArgsError < Exception
+      def initialize(cert_file : String?, key_file : String?)
+        if cert_file
+          super "if --cert-file is specified, --key-file must be as well!"
+        else
+          super "if --key-file is specified, --cert-file must be as well!"
+        end
+      end
+    end
+
+    OPTIONS = {:port, :webroot, :processes, :sign_in_endpoint, :cert_file, :key_file}
 
     # Create a new Configuration from command-line arguments
     def self.from_args(args)
@@ -44,6 +60,8 @@ module Flix
       config_location = nil
       dirs = [] of String
       disable_auth = nil
+      cert_file = nil
+      key_file = nil
 
       OptionParser.parse args do |parser|
         parser.banner = %<"flix": a streaming video server\n>
@@ -81,17 +99,27 @@ module Flix
           disable_auth = true
         end
 
+        parser.on "--key-file", HelpText::SSL_KEY_FILE do |path|
+          key_file = path
+        end
+        parser.on "--cert-file", HelpText::SSL_CERT_FILE do |path|
+          cert_file = path
+        end
+
         parser.on "-h", "--help", "Show this help message" do
           puts parser
           exit
         end
 
         parser.invalid_option do |flag|
+          pp! flag
+          next if KEMAL_SSL_FLAGS.includes? flag
           Flix.logger.error "ERROR: #{flag} is not a valid option."
           Flix.logger.error parser
           exit 64 # Usage exit code
         end
       end
+      raise CertArgsError.new cert_file, key_file unless cert_file.nil? ^ key_file.nil?
       dirs = Defaults.media_dirs if dirs.empty?
       conf = new dirs: dirs.reject! &.empty?, config_location: (config_location || Defaults.config_location).not_nil!
       {% for opt in OPTIONS %}

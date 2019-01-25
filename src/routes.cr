@@ -40,6 +40,12 @@ module Flix
     # the webroot for the server
     get "/" { |context| context.redirect "/index.html" }
 
+    if Flix.config.use_ssl?
+      ssl = Kemal::SSL.new
+      ssl.cert_file = Flix.config.cert_file
+      ssl.key_file = Flix.config.key_file
+      Kemal.config.ssl = ssl
+    end
     public_folder config.webroot
     Kemal.config.env = "production" unless Flix.config.debug
     if (env = ENV["KEMAL_ENV"]?) && (env == "test")
