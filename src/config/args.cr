@@ -112,8 +112,6 @@ module Flix
         end
 
         parser.invalid_option do |flag|
-          pp! flag
-          next if KEMAL_SSL_FLAGS.includes? flag
           Flix.logger.error "ERROR: #{flag} is not a valid option."
           Flix.logger.error parser
           exit 64 # Usage exit code

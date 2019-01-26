@@ -41,10 +41,18 @@ module Flix
     get "/" { |context| context.redirect "/index.html" }
 
     if Flix.config.use_ssl?
-      ssl = Kemal::SSL.new
-      ssl.cert_file = Flix.config.cert_file
-      ssl.key_file = Flix.config.key_file
-      Kemal.config.ssl = ssl
+      if (cf = Flix.config.cert_file) && (kf = Flix.config.key_file)
+        ssl : OpenSSL::SSL::Context::Server = OpenSSL::SSL::Context::Server.new
+        ssl.cert_file = cf
+        ssl.key_file = kf
+        val2pass : OpenSSL::SSL::Context::Server? = ssl
+        Kemal.config.ssl = val2pass
+      else
+        raise "\
+          Flix.config.cert_file # => #{Flix.config.cert_file.inspect}\
+          Flix.config.key_file # => #{Flix.config.key_file.inspect}\
+          Both must be either nil or not nil!"
+      end
     end
     public_folder config.webroot
     Kemal.config.env = "production" unless Flix.config.debug

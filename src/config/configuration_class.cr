@@ -13,7 +13,7 @@ module Flix
       class_property media_dirs : Array(String)
       class_property sign_in_endpoint = "/sign_in"
       class_property home_dir
-      class_property port = 9999
+      class_property port : UInt16 = 9999
       class_property debug = !!ENV["flix_debug"]?
       @@webroot : String = ENV["flix_webroot"]? || File.join(File.dirname(Dir.current), "flix_webui", "build")
       @@config_location : String = ENV["flix_config"]? || File.join(config_home, "flix.cr")
