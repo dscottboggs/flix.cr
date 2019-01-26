@@ -8,7 +8,10 @@ prod_mode=""
 cert_dir='/etc/letsencrypt'
 insecure=""
 
+args2fwd=""
+
 puts_help() {
+  [ $1 ] && echo $1
   cat << HERE
 local-deploy.sh: deploy a flix.cr instance with letsencrypt generated SSL certificates
 
@@ -34,6 +37,13 @@ HERE
   exit
 }
 
+build_flix() {
+  crystal build -o/usr/local/bin/flix --release --progress src/flix.cr
+}
+
+[ -x certbot ] || puts_help 'certbot must be installed and on your $PATH!'
+[ -x flix ] || build_flix
+
 #parse CLI arguments
 while (( "$#" )); do
   case $1 in
@@ -43,7 +53,7 @@ while (( "$#" )); do
     --production) prod_mode=true;;
     --cert-dir) cert_dir=$2; shift;;
     --no-extra-security) insecure=true;;
-    -*|--*) echo invalid option $1; puts_help;;
+    *) args2fwd="$args2fwd $1";;
   esac
   shift
 done
@@ -64,3 +74,7 @@ fi
 
 # execute
 certbot $cert_opts
+
+flix $args2fwd \
+  --key-file ${cert_dir}/live/${ssl_domain}/privkey.pem \
+  --cert-file ${cert_dir}/live/${ssl_domain}/fullchain.pem
