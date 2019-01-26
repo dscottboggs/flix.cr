@@ -100,10 +100,10 @@ module Flix
         end
 
         parser.on "--key-file", HelpText::SSL_KEY_FILE do |path|
-          key_file = path
+          key_file = File.real_path path
         end
         parser.on "--cert-file", HelpText::SSL_CERT_FILE do |path|
-          cert_file = path
+          cert_file = File.real_path path
         end
 
         parser.on "-h", "--help", "Show this help message" do
