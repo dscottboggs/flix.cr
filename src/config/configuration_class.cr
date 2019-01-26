@@ -69,7 +69,12 @@ module Flix
     # mappings of titles to filepaths, so you can override the title
     # automatically generated from the filename. This location also contains the
     # user authentication tokens.
-    property config_location : String = Defaults.config_location
+    getter config_location : String = Defaults.config_location
+    def config_location=(location : String)
+      conf_dir = File.dirname location
+      Dir.mkdir_p conf_dir unless Dir.exists? conf_dir
+      @config_location = location
+    end
     # If the "flix_debug" environment variable is set to any value, or this
     # property is set, extra logging information will be sent to stdout.
     property debug : Bool = Defaults.debug

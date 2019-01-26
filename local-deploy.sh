@@ -41,8 +41,8 @@ build_flix() {
   crystal build -o/usr/local/bin/flix --release --progress src/flix.cr
 }
 
-[ -x certbot ] || puts_help 'certbot must be installed and on your $PATH!'
-[ -x flix ] || build_flix
+which certbot || puts_help 'certbot must be installed and on your $PATH!'
+which flix || build_flix
 
 #parse CLI arguments
 while (( "$#" )); do
