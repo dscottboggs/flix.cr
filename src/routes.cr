@@ -42,11 +42,10 @@ module Flix
 
     if Flix.config.use_ssl?
       if (cf = Flix.config.cert_file) && (kf = Flix.config.key_file)
-        ssl : OpenSSL::SSL::Context::Server = OpenSSL::SSL::Context::Server.new
+        ssl = Kemal::SSL.new
         ssl.cert_file = cf
         ssl.key_file = kf
-        val2pass : OpenSSL::SSL::Context::Server? = ssl
-        Kemal.config.ssl = val2pass
+        Kemal.config.ssl = ssl.context
       else
         raise "\
           Flix.config.cert_file # => #{Flix.config.cert_file.inspect}\

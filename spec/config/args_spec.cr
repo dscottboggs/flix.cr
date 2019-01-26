@@ -20,7 +20,14 @@ describe "Flix::Configuration.from_args" do
     {% for ctx, path in {"absolute path" => "#{__DIR__}/test_data", "relative path" => "test_data"} %}
     context "using a {{ctx.id}}" do
       it "parses the args correctly" do
-        test_config = Flix::Configuration.from_args(\%w<--dir {{path.id}}/media --config {{path.id}}/config --port 1234 --webroot /tmp --processes 2 --sign-in-endpoint /login>)
+        test_config = Flix::Configuration.from_args(\%w<
+          --dir {{path.id}}/media
+          --config {{path.id}}/config
+          --port 1234
+          --webroot /tmp
+          --processes 2
+          --sign-in-endpoint /login
+        >)
         # test_config.dirs.should contain Flix::Scanner::VideoFile.new "{{path.id}}/media/TestVideo.mp4"
         test_config.config_location.should eq "{{path.id}}/config"
         test_config.port.should eq 1234
@@ -30,5 +37,29 @@ describe "Flix::Configuration.from_args" do
       end
     end
     {% end %}
+    it "should raise an exception if --cert-file is specified but --key-file isn't" do
+      expect_raises Flix::Configuration::CertArgsError do
+        Flix::Configuration.from_args ["--cert-file"]
+      end
+    end
+    it "should raise an exception if --key-file is specified but --cert-file isn't" do
+      expect_raises Flix::Configuration::CertArgsError do
+        Flix::Configuration.from_args ["--key-file"]
+      end
+    end
+    context "when port number is 0" do
+      it "should raise a descriptive exception" do
+        expect_raises Exception, message: "port cannot be 0" do
+          Flix::Configuration.from_args ["--port", "0"]
+        end
+      end
+    end
+    context "when port number is out of the right range" do
+      it "should raise a descriptive exception" do
+        expect_raises ArgumentError do
+          Flix::Configuration.from_args ["--port", "65536"]
+        end
+      end
+    end
   end
 end

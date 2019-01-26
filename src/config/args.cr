@@ -117,7 +117,7 @@ module Flix
           exit 64 # Usage exit code
         end
       end
-      raise CertArgsError.new cert_file, key_file unless cert_file.nil? ^ key_file.nil?
+      raise CertArgsError.new cert_file, key_file if cert_file.nil? ^ key_file.nil?
       dirs = Defaults.media_dirs if dirs.empty?
       conf = new dirs: dirs.reject! &.empty?, config_location: (config_location || Defaults.config_location).not_nil!
       {% for opt in OPTIONS %}
