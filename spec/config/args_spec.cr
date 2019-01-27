@@ -39,13 +39,18 @@ describe "Flix::Configuration.from_args" do
     {% end %}
     it "should raise an exception if --cert-file is specified but --key-file isn't" do
       expect_raises Flix::Configuration::CertArgsError do
-        Flix::Configuration.from_args ["--cert-file"]
+        Flix::Configuration.from_args ["--cert-file", "/tmp"]
       end
     end
     it "should raise an exception if --key-file is specified but --cert-file isn't" do
       expect_raises Flix::Configuration::CertArgsError do
-        Flix::Configuration.from_args ["--key-file"]
+        Flix::Configuration.from_args ["--key-file", "/tmp"]
       end
+    end
+    it "should set the --key-file and --cert-file values" do
+      test_config = Flix::Configuration.from_args %w<--key-file /tmp --cert-file /etc>
+      test_config.key_file.should eq "/tmp"
+      test_config.cert_file.should eq "/etc"
     end
     context "when port number is 0" do
       it "should raise a descriptive exception" do
