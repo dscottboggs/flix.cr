@@ -11,9 +11,10 @@ module Flix
       class_property webroot : String
       class_property config_location : String
       class_property media_dirs : Array(String)
-      class_property sign_in_endpoint : String
+      class_property sign_in_endpoint = "/sign_in"
       class_property home_dir
-      class_property port : UInt16
+      class_property port : UInt16 = 9999
+      class_property debug = !!ENV["flix_debug"]?
       @@webroot : String = ENV["flix_webroot"]? || File.join(File.dirname(Dir.current), "flix_webui", "build")
       @@config_location : String = ENV["flix_config"]? || File.join(config_home, "flix.cr")
       @@media_dirs : Array(String) = [File.join(@@home_dir, "Videos", "Public")]
@@ -70,10 +71,15 @@ module Flix
     # mappings of titles to filepaths, so you can override the title
     # automatically generated from the filename. This location also contains the
     # user authentication tokens.
-    property config_location : String = Defaults.config_location
+    getter config_location : String = Defaults.config_location
+    def config_location=(location : String)
+      conf_dir = File.dirname location
+      Dir.mkdir_p conf_dir unless Dir.exists? conf_dir
+      @config_location = location
+    end
     # If the "flix_debug" environment variable is set to any value, or this
     # property is set, extra logging information will be sent to stdout.
-    property debug = !!ENV["flix_debug"]?
+    property debug : Bool = Defaults.debug
     # The absolute path of the web interface to use for this server instance.
     # The default is to check the "flix_webroot" environment variable, or to
     # fall back on the absolute path of the directory at
@@ -110,6 +116,12 @@ module Flix
     # Setting this to true disables authentication entirely.
     property allow_unauthorized : Bool = ENV["KEMAL_ENV"]? == "test"
 
+    property key_file : String?
+    property cert_file : String?
+    def use_ssl?
+      key_file && cert_file
+    end
+
     def initialize(@config_location : String = Defaults.config_location,
                    @dirs = Defaults.media_dirs)
       check_config_dir
@@ -127,8 +139,10 @@ module Flix
     end
 
     property log_file : IO = STDOUT
-    property log_level : Logger::Severity = Logger::DEBUG
-
+    setter log_level : Logger::Severity?
+    def log_level
+      @log_level ||= debug ? Logger::DEBUG : Logger::INFO
+    end
     # A central interface for debug and admin log messages.
     def logger : Logger
       @logger ||= Logger.new io: log_file, level: log_level

@@ -1,11 +1,57 @@
+
 # flix
 
-WIP Media server in crystal/kemal.
+Video streaming server in Crystal, using Kemal.
 Serves videos from one or more directories with a ReactJS web app or over a simple API.
 
 A demo site hosting some public-domain videos is available at
 [demo.flix.tams.tech](https://demo.flix.tams.tech/index.html). The username is
 *demouser* and the password is *demopass*.
+
+![screenshot of flix](https://raw.githubusercontent.com/dscottboggs/flix.cr/SSL/Screenshot_2019-01-26__flix%20.png)
+
+## Why flix?
+
+Flix does not aim to be a full-featured media center like Emby or Plex. It is focused on being a
+fast, lightweight video-streaming platform. It is developed under the unix philosophy of doing
+one thing and doing it well, maintaining as much separation and independence between individual
+components as possible.
+
+#### Features:
+ - Performance: while playing every video on the demo site at the same time, it consumed
+   18MB of memory and 0.1% of my 2.6GHz CPU. Raspberry Pi 1 image coming soon.
+ - Stream videos from one or more nested directories.
+ - Minimal progressive web app with mobile-friendly design
+ - Password-protected API and interface
+ - SSL integration
+ - compiles to a single binary
+
+#### Yet to be implemented
+See the [issues](https://github.com/dscottboggs/flix.cr/issues) page
+
+#### Features that won't be implemented:
+ - Querying to a 3rd party service for subtitles, thumbnails, titles, etc.
+ - Music playback or other media playback besides video (although there's no reason another service
+   couldn't be created based on this which serves music instead, however it would require a much
+   more complicated user interface)
+
+### Flix vs...
+##### Plex or Emby
+Flix is an free and open-source software licensed under the AGPL, a restrictive copyleft license
+which ensures that it will always be a software that benefits its users first. It is 100% respective
+of your privacy and does not interact with any 3rd party services.
+
+##### Jellyfin
+I wholly support the Jellyfin project, and recognize that it's feature set may be more desireable to
+some, however, I wanted a more lightweight, privacy-by-design solution. Additionally, Crystal's extreme
+readability and flexible syntax makes development more pleasant.
+
+##### Streama
+Streama is built using the Grails platform, which is a dynamically-typed language which targets the
+JVM. I haven't tested it personally, but I would assume that performance on such a platform would be
+greatly reduced compared to native Crystal binaries. Additionally, Streama implements many features
+I find to be undesirable. See the **Features that won't be implemented** section.
+
 
 ## Installation
 
@@ -41,65 +87,69 @@ npm run build # compile JS (for compatibility and size)
 flix_webroot=$PWD/build flix --port=8080 # starts serving.
 ```
 
+### Deployment with built-in SSL and certbot
+I use a reverse proxy to manage a number of sites and web services hosted on a
+single machine. It's simpler that way for me. However, for someone who's only
+deploying this one service, it may be simpler to deploy it standalone by
+providing certificates directly to the webserver (for example if running on a
+Raspberry Pi).
+
+If you want to deploy `flix` directly with SSL:
+1. get a domain, and point your DNS record at your local IP.
+2. make sure you have ports 80 and 443 open on your router. Certbot uses these ports directly, so you'll need to deploy on that port and run as root.
+3. Make sure you have `certbot` installed and a `flix.cr` executable on your `$PATH`.
+4. run `./local-deploy.sh`, passing it any options you wish to overload. You will need at least
+  - `--email`: the email you wish to register with the ACME/LetsEncrypt service with
+  - `--doman`: the domain you want to register a certificate for
+  - `--port 443`: or whatever port you want to wind up having.
+5. once you're sure it all works (you'll get an error about an invalid certificate issuer in the browser, but everything besides that) run `./local-deploy.sh` again with the same options, and add the `--production` flag.
+6. you can now close port 80 (no redirect support)
+
+### Deployment with Docker and Traefik
+##### (how I do it)
+This is the docker-compose file from the [demo site](https://demo.flix.tams.tech/), verbatim.
+
+```yaml
+version: '3'
+services:
+  flix.cr:
+    build:
+      context: .
+      dockerfile: Dockerfile.with-ui
+    networks:
+      # The "web" network is what I have traefik configured to watch on. Yours may be different.
+      # see global networks config
+      - web
+    volumes:
+      # bind mount for media
+      - /home/scott/Videos/Public:/media:ro
+      # regular volume for storing config state
+      # see global volumes config
+      - flix_demo_config:/config
+    labels:
+      traefik.docker.network: web
+      traefik.enable: "true"
+      # This next label tells traefik to forward all requests for these Host values to this container
+      traefik.madscientists_blog.frontend.rule: Host:demo.flix.tams.tech,demo.flix.madscientists.co
+      traefik.madscientists_blog.port: "80"
+      traefik.madscientists_blog.protocol: http
+
+networks:
+  web:
+    external: true
+
+volumes: { flix_demo_config: }
+```
+
+Using the appropriate values (substitute the hostname for your own and set the
+appropriate path to your media directory), this deployment is as simple as:
+
+1. point your DNS at your IP
+2. Open ports 80 and 443 for traefik?
+3. run `docker-compose up -d`
+
+That's it!
+
 ## Usage
 
 See the output of `--help` for command line usage.
-
-### API endpoints
-This can be used without a frontend using `curl` and `mpv` or other similar software. For example:
-
-```sh
-media_server --port 8888 &
-curl localhost:8888/dmp
-curl localhost:8888/vid/received_vid_hash | mpv -
-```
-
-| endpoint | action       |
-|--------|---------------------------------------------------------------------|
-| `/dmp` | Returns a json-encoded object, in which each key is a unique identifier, and each value is a human-readable title, or another similarly structured object, representing a child directory. Each object also contains up to two special keys, "title", which is the title of the folder; and "thumbnail", which is the identifier for requesting the thumbnail for that directory. |
-
-This object representation is all you need to access all the data on each
-item. Thumbnail images can be retrieved with this endpoint:
-
-| endpoint | action       |
-|--------|---------------------------------------------------------------------|
-| `/img` | Requires a "id" URL parameter, like `/img?id={value}`, where id is the unique identifier returned by the /dmp endpoint. Returns the image as a blob. |
-| `/img/{id value}` | The id can be placed directly in the URL path, like so.|
-
-And it's the same with the videos:
-
-| endpoint | action       |
-|--------|---------------------------------------------------------------------|
-| `/vid` | Requires a "id" URL parameter, like `/vid?id={value}`, where "id" is the unique identifier specified in the /dmp endpoint. Returns the raw mp4 video stream. |
-| `/vid/{id value}` | The id can be placed directly in the URL path, like so.|
-
-So just by knowing that unique ID, you can access all the public-facing
-attributes for that video. The `/nfo` endpoint provides some metadata for a video:
-
-| endpoint | action       |
-|--------|---------------------------------------------------------------------|
-| `/nfo` | Requires a "id" URL parameter, like `/nfo?id={value}`, where "id" is the unique identifier specified in the /dmp endpoint. Returns JSON-encoded metadata. |
-
-## Testing
-
-The tests will deadlock unless you set the `KEMAL_ENV` environment variable to
-`test`. For example, to run all tests with verbose output, run
-
-```shell
-KEMAL_ENV=test crystal spec -v
-```
-Port 3000 must be available to run the specs.
-
-## Contributing
-
-1. Fork it (https://github.com/dscottboggs/flix.cr.git)
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
-
-Please include an appropriate `spec` file and ensure that `crystal spec` passes.
-
-## Contributors
-
-- [dscottboggs](https://github.com/dscottboggs) D. Scott Boggs - creator, maintainer

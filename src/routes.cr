@@ -41,20 +41,34 @@ module Flix
     get "/" { |context| context.redirect "/index.html" }
 
     public_folder config.webroot
-    if (env = ENV["KEMAL_ENV"]?) && (env == "test")
+    Kemal.config.env = "production" # unless Flix.config.debug
+    if ((env = ENV["KEMAL_ENV"]?) && (env == "test"))
       # kemal-spec only works like this
       Kemal.run
     else
       # http://kemalcr.com/cookbook/reuse_port/
       Kemal.run do |conf|
         if server = conf.server
-          server.bind_tcp("0.0.0.0", Flix.config.port.to_i, reuse_port: config.processes > 1)
+          if config.use_ssl?
+            ssl = Kemal::SSL.new
+            ssl.cert_file = config.cert_file.not_nil!
+            ssl.key_file = config.key_file.not_nil!
+            conf.ssl = ssl.context
+            server.bind_tls(
+              host: "0.0.0.0",
+              port: config.port.to_i,
+              context: conf.ssl.not_nil!,
+              reuse_port: config.processes > 1)
+          else
+            server.bind_tcp("0.0.0.0", config.port.to_i, reuse_port: config.processes > 1)
+          end
         else
           raise "got nil server! look at config class"
         end
       end
     end
   end
+
 
   # this method returns the Proc which gets called when the /nfo endpoint is
   # reached.

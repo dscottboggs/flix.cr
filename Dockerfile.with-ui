@@ -32,7 +32,7 @@ COPY . /flix.cr
 # compile and install
 RUN /usr/bin/crystal build --release --static -o /usr/local/bin/flix src/flix.cr &&\
     chmod 555 /usr/local/bin/flix &&\
-    mkdir /config
+    mkdir /config /webui
 
 COPY --from=webui /flix-webui/build /webui
 
