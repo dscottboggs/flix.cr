@@ -2,13 +2,13 @@
 
 set -euxo pipefail
 
-ssl_email=""
-ssl_domain=""
-prod_mode=""
-cert_dir='/etc/letsencrypt'
-work_dir='/var/log/letsencrypt'
-logs_dir='/var/log/letsencrypt'
-insecure=""
+ssl_email=${ssl_email:-""}
+ssl_domain=${ssl_domain:-""}
+prod_mode=${prod_mode:-""}
+cert_dir=${cert_dir:-'/etc/letsencrypt'}
+work_dir=${work_dir:-'/var/log/letsencrypt'}
+logs_dir=${logs_dir:-'/var/log/letsencrypt'}
+insecure=${insecure:-""}
 
 args2fwd=""
 
@@ -25,10 +25,10 @@ process of generating the certificate. Once you have obtained a valid "fake"
 certificate, run the script again in --production mode to get a real cert.
 
 Usage:
-    sudo ./local-deploy.sh --ssl-email EMAIL --ssl-domain DOMAIN [--production --no-extra-security --cert-dir DIRECTORY]
+    sudo ./local-deploy.sh --email EMAIL --domain DOMAIN [--production --no-extra-security --cert-dir DIRECTORY]
 
-  --ssl-email             the email to send letsencrypt notifications to
-  --ssl-domain            the domain to certify and deploy
+  --email                 the email to send letsencrypt notifications to
+  --domain                the domain to certify and deploy
   --production            uses a real (production) certificate with strict rate limits
   --cert-dir              where to put the letsencrypt configurations (default $cert_dir)
   --no-extra-security     Turns off the default extra security options:
@@ -49,8 +49,8 @@ which flix || build_flix
 #parse CLI arguments
 while (( "$#" )); do
   case $1 in
-    -e|--ssl-email) ssl_email=$2; shift;;
-    -d|--ssl-domain) ssl_domain=$2; shift;;
+    -e|--email) ssl_email=$2; shift;;
+    -d|--domain) ssl_domain=$2; shift;;
     -h|--help) puts_help;;
     --production) prod_mode=true;;
     --cert-dir)
