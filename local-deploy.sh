@@ -6,12 +6,14 @@ ssl_email=""
 ssl_domain=""
 prod_mode=""
 cert_dir='/etc/letsencrypt'
+work_dir='/var/log/letsencrypt'
+logs_dir='/var/log/letsencrypt'
 insecure=""
 
 args2fwd=""
 
 puts_help() {
-  [ $1 ] && echo $1
+  [[ -n ${1+is_set} ]] && echo $1
   cat << HERE
 local-deploy.sh: deploy a flix.cr instance with letsencrypt generated SSL certificates
 
@@ -51,7 +53,15 @@ while (( "$#" )); do
     -d|--ssl-domain) ssl_domain=$2; shift;;
     -h|--help) puts_help;;
     --production) prod_mode=true;;
-    --cert-dir) cert_dir=$2; shift;;
+    --cert-dir)
+      cert_dir=$2
+      # create a temp dir next to the cert dir when cert_dir is sets
+      work_dir=${cert_dir}-workdir
+      mkdir $work_dir ||: nbd
+      logs_dir=${cert_dir}-logs
+      mkdir $logs_dir ||: nbd
+      shift
+    ;;
     --no-extra-security) insecure=true;;
     *) args2fwd="$args2fwd $1";;
   esac
@@ -61,7 +71,7 @@ done
 # default/production certbot options
 cert_opts="certonly --standalone --agree-tos --email $ssl_email -n"
 cert_opts="$cert_opts --domain $ssl_domain --keep-until-expiring"
-cert_opts="$cert_opts --config-dir $cert_dir"
+cert_opts="$cert_opts --config-dir $cert_dir --work-dir $work_dir --logs-dir $logs_dir"
 
 # add optional arguments to the command
 if [ "$prod_mode" = "" ]; then
