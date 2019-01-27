@@ -7,9 +7,50 @@ A demo site hosting some public-domain videos is available at
 [demo.flix.tams.tech](https://demo.flix.tams.tech/index.html). The username is
 *demouser* and the password is *demopass*.
 
-### Screenshot
-
 ![screenshot of flix](https://raw.githubusercontent.com/dscottboggs/flix.cr/SSL/Screenshot_2019-01-26__flix%20.png)
+
+## Why flix?
+
+Flix does not aim to be a full-featured media center like Emby or Plex. It is focused on being a
+fast, lightweight video-streaming platform. It is developed under the unix philosophy of doing
+one thing and doing it well, maintaining as much separation and independence between individual
+components as possible.
+
+#### Features:
+ - Performance: while playing every video on the demo site at the same time, it consumed
+   18MB of memory and 0.1% of my 2.6GHz CPU. Raspberry Pi 1 image coming soon.
+ - Stream videos from one or more nested directories.
+ - Minimal progressive web app with mobile-friendly design
+ - Password-protected API and interface
+ - SSL integration
+ - compiles to a single binary
+
+#### Yet to be implemented
+See the [issues](https://github.com/dscottboggs/flix.cr/issues) page
+
+#### Features that won't be implemented:
+ - Querying to a 3rd party service for subtitles, thumbnails, titles, etc.
+ - Music playback or other media playback besides video (although there's no reason another service
+   couldn't be created based on this which serves music instead, however it would require a much
+   more complicated user interface)
+
+### Flix vs...
+##### Plex or Emby
+Flix is an free and open-source software licensed under the AGPL, a restrictive copyleft license
+which ensures that it will always be a software that benefits its users first. It is 100% respective
+of your privacy and does not interact with any 3rd party services.
+
+##### Jellyfin
+I wholly support the Jellyfin project, and recognize that it's feature set may be more desireable to
+some, however, I wanted a more lightweight, privacy-by-design solution. Additionally, Crystal's extreme
+readability and flexible syntax makes development more pleasant.
+
+##### Streama
+Streama is built using the Grails platform, which is a dynamically-typed language which targets the
+JVM. I haven't tested it personally, but I would assume that performance on such a platform would be
+greatly reduced compared to native Crystal binaries. Additionally, Streama implements many features
+I find to be undesirable. See the **Features that won't be implemented** section.
+
 
 ## Installation
 
