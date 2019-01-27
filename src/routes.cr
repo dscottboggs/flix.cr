@@ -10,6 +10,7 @@ require "./scanner/mime_type"
 module Flix
   extend self
 
+  # Begin serving the application
   def serve_up
     (config.processes - 1).times { fork { do_serve_up } }
     do_serve_up
@@ -40,20 +41,34 @@ module Flix
     get "/" { |context| context.redirect "/index.html" }
 
     public_folder config.webroot
-    if (env = ENV["KEMAL_ENV"]?) && (env == "test")
+    Kemal.config.env = "production" # unless Flix.config.debug
+    if ((env = ENV["KEMAL_ENV"]?) && (env == "test"))
       # kemal-spec only works like this
       Kemal.run
     else
       # http://kemalcr.com/cookbook/reuse_port/
       Kemal.run do |conf|
         if server = conf.server
-          server.bind_tcp("0.0.0.0", Flix.config.port.to_i, reuse_port: config.processes > 1)
+          if config.use_ssl?
+            ssl = Kemal::SSL.new
+            ssl.cert_file = config.cert_file.not_nil!
+            ssl.key_file = config.key_file.not_nil!
+            conf.ssl = ssl.context
+            server.bind_tls(
+              host: "0.0.0.0",
+              port: config.port.to_i,
+              context: conf.ssl.not_nil!,
+              reuse_port: config.processes > 1)
+          else
+            server.bind_tcp("0.0.0.0", config.port.to_i, reuse_port: config.processes > 1)
+          end
         else
           raise "got nil server! look at config class"
         end
       end
     end
   end
+
 
   # this method returns the Proc which gets called when the /nfo endpoint is
   # reached.
@@ -75,6 +90,8 @@ module Flix
     end
   end
 
+  # this method returns the Proc which gets called when the /img endpoint is
+  # reached.
   def serve_img : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
@@ -102,6 +119,8 @@ module Flix
     end
   end
 
+  # this method returns the Proc which gets called when the /vid endpoint is
+  # reached.
   def serve_video : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
@@ -124,6 +143,9 @@ module Flix
     end
   end
 
+  # Returns true if the user is found or if
+  # Flix::Configuration.allow_unauthorized is set. Otherwise, sets the status
+  # to *403 Forbidden* and returns false.
   def user_found?(context)
     if context.current_user.try(&.["name"]?) || Flix.config.allow_unauthorized
       true
@@ -133,6 +155,7 @@ module Flix
     end
   end
 
+  # Set the status code and render an appropriate 404 Not Found.
   macro page_not_found
     context.response.status_code = 404
     render_404

@@ -2,6 +2,7 @@ require "json"
 require "./*"
 
 module Flix::Scanner
+  # The JSON format that the /nfo endpoint returns
   struct NFO
     include JSON::Serializable
 
@@ -18,6 +19,8 @@ module Flix::Scanner
   end
 
   abstract class FileMetadata
+    # returns a new Flix::Scanner::NFO filled out with the appropriate data for
+    # the file this object represents.
     def nfo
       NFO.new textual_mime_type,
         _filename,

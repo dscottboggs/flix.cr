@@ -22,16 +22,20 @@ WORKDIR /flix.cr
 # install dependencies and cache before copying so we don't have to redo this
 # step every time any file (including this one) changes in the whole source tree
 COPY shard.yml /flix.cr
-RUN shards install &&\
-    apt-get purge wget git curl -qqy &&\
+RUN shards install
+# clean up
+RUN apt-get purge wget git curl -qqy &&\
     apt-get autoremove --purge -qqy &&\
     apt-get clean -yqq
+# copy the rest of the stuff over
 COPY . /flix.cr
 # compile and install
 RUN /usr/bin/crystal build --release --static -o /usr/local/bin/flix src/flix.cr &&\
     chmod 555 /usr/local/bin/flix &&\
-    mkdir /config
+    mkdir /config /webui
 
 COPY --from=webui /flix-webui/build /webui
+
+RUN ln -s /flix.cr/docs /webui/
 
 ENTRYPOINT /flix.cr/docker-entrypoint.sh

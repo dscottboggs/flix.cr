@@ -5,6 +5,7 @@ require "./metadata"
 
 module Flix
   module Scanner
+    # A directory which contains valid media files.
     class MediaDirectory < FileMetadata
       @children_hash = Hash(String, FileMetadata).new
       @json_cache : String?
@@ -22,6 +23,8 @@ module Flix
         @json_cache = nil
       end
 
+      # Lazily translates the list of children into a hash-table, and returns
+      # that hash-table.
       def children : Hash(String, FileMetadata)
         if @children_hash.values != @children
           @children.each do |child|
@@ -31,16 +34,22 @@ module Flix
         @children_hash
       end
 
+      # Push a new child into the children of this directory
       def <<(child : FileMetadata?)
         @children << child
         @json_cache = nil
         @children_hash[child.hash] = child
       end
 
+      # iterate over all the child files/directories. Each iteration, the block
+      # recieves a pair of the string-hash by which the child is referenced, and
+      # the child value itself.
       def each_child
         @children_hash.each { |k, v| yield k, v }
       end
 
+      # encode the directory into JSON for the /dmp endpoint. This is recursively
+      # called on all child FileMetadata objects.
       def to_json : String
         @json_cache ||= begin
           buf = String::Builder.new
@@ -52,6 +61,7 @@ module Flix
         end
       end
 
+      # :ditto:
       def to_json(builder : JSON::Builder)
         builder.object do
           # Flix.logger.debug "Adding title #{name.inspect} and thumbail #{thumbnail.inspect} to json"
@@ -74,6 +84,7 @@ module Flix
         end
       end
 
+      # returns true
       def is_dir?
         true
       end
