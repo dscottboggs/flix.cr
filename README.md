@@ -8,7 +8,8 @@ A demo site hosting some public-domain videos is available at
 *demouser* and the password is *demopass*.
 
 ### Screenshot
- (todo)
+
+![screenshot of flix](https://raw.githubusercontent.com/dscottboggs/flix.cr/SSL/Screenshot_2019-01-26__flix%20.png)
 
 ## Installation
 
