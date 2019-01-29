@@ -2,6 +2,7 @@
 # Copyright (C) 2018 D. Scott Boggs
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
 require "json"
+require "yaml"
 require "./mime_type"
 
 module Flix
@@ -25,11 +26,6 @@ module Flix
                      @thumbnail : PhotoFile? = nil)
         @name = FileMetadata.get_title_from @path
       end
-
-      # def self.from_file_path?(filepath : String) : self | Nil
-      #   info = File.info? filepath
-      #   self.new path: filepath, stat: info unless info.nil?
-      # end
 
       # returns false; Directory overloads this with true
       def is_dir?
@@ -219,6 +215,42 @@ module Flix
         end
         # p! @@all_videos.size
         # Flix.logger.debug "all_videos after association: #{@@all_videos}"
+      end
+
+      # ### <<<<     Configuration serialization section     >>>> #####
+
+      # A convenience structure for converting to YAML.
+      abstract class ConfigData
+        include YAML::Serializable
+        # The human-readable title of the associated file, which may be
+        # overridden.
+        property title : String
+
+        # An assiciated thumbnail. Nil by default. Subclasses which are
+        # able to associate thumbnails should override this.
+        def thumbnail
+          nil
+        end
+
+        # :nodoc:
+        def content
+          nil
+        end
+
+        def initialize(from config : FileMetadata)
+          @title = config.name
+        end
+      end
+
+      abstract def config_data
+
+      def merge!(with config : ConfigData) : self
+        raise <<-HERE unless same_path? as: config
+        attempted to merge #{path} with #{other.path} which is a different
+        location
+        HERE
+        name = config.title
+        self
       end
     end
   end

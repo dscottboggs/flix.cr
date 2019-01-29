@@ -32,7 +32,7 @@ module Flix::Scanner
     end
   end
 
-  class Directory < FileMetadata
+  class MediaDirectory < FileMetadata
     def nfo
       NFO.new "inode/directory", _filename, ""
     end

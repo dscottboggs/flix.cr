@@ -64,22 +64,16 @@ module Flix
       # :ditto:
       def to_json(builder : JSON::Builder)
         builder.object do
-          # Flix.logger.debug "Adding title #{name.inspect} and thumbail #{thumbnail.inspect} to json"
           builder.field "title", name
           builder.field "thumbnail", thumbnail.hash unless thumbnail.nil?
           each_child do |hash, child|
             if child.is_dir?
-              # debugger
               builder.field child.hash do
                 child.as(MediaDirectory).to_json(builder)
               end
             else
-              # Flix.logger.debug "Added child #{child.name} to directory #{name}'s json"
               builder.field hash, child.name
             end
-          end
-          if size == 0
-            # Flix.logger.warn "got no children from #{self.inspect}"
           end
         end
       end
@@ -87,6 +81,44 @@ module Flix
       # returns true
       def is_dir?
         true
+      end
+
+      # ### <<<<     Configuration serialization section     >>>> #####
+
+      class ConfigData < FileMetadata::ConfigData
+        property title : String
+        property thumbnail : String?
+        # getter content : Iterator({String, FileMetadata::ConfigData})
+        getter content : Hash(String, FileMetadata::ConfigData)
+
+        def initialize(from dir : MediaDirectory)
+          super
+          @thumbnail = dir.thumbnail.try &.path
+          @content = dir
+            .children
+            .map { |k, v| { k, v.config_data }}
+            .to_h
+            # .each
+            # .map { |pair| {pair[0], pair[1].config_data} }
+        end
+      end
+
+      def config_data
+        ConfigData.new from: self
+      end
+
+      def merge!(with config : ConfigData) : self
+        super
+        if (new_thumb = config.thumbnail) && (thumb = @thumbnail)
+          thumb.merge! new_thumb
+        end
+        config.contents.each do |pair|
+          id, metadata = pair
+          if child = self[id]?
+            child.merge! metadata
+          end
+        end
+        self
       end
     end
   end

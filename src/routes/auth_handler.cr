@@ -4,7 +4,6 @@
 
 # JWT authorization middleware
 class Flix::Authentication::Handler < Kemal::Handler
-
   # This struct is used to deserialize the received login information
   struct ReceivedUser
     include JSON::Serializable

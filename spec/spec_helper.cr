@@ -16,9 +16,9 @@ VIDEO_TWO_PATH = File.join(TEST_MEDIA_DIR, "Test.Video.-.2.mp4")
 IMAGE_ONE_PATH = File.join(TEST_MEDIA_DIR, "TestVideo.jpg")
 
 TEST_FILES = {
-  video_one: File.open(VIDEO_ONE_PATH),
-  video_two: File.open(VIDEO_TWO_PATH),
-  image_one: File.open(IMAGE_ONE_PATH),
+  video_one: File.open(VIDEO_ONE_PATH).tap &.close,
+  video_two: File.open(VIDEO_TWO_PATH).tap &.close,
+  image_one: File.open(IMAGE_ONE_PATH).tap &.close,
 }
 
 Flix.config = Flix::Configuration.new config_location: TEST_CONFIG_DIR, dirs: [TEST_MEDIA_DIR]

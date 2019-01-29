@@ -25,6 +25,7 @@ module Flix::Authentication
   def set_username_pw(user : User, password : String)
     @@users[user.name] = encrypt password
   end
+
   # Set the already encrypted password for the given user
   def set_username_pw(user : User, password : Scrypt::Password)
     @@users[user.name] = password

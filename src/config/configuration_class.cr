@@ -72,11 +72,13 @@ module Flix
     # automatically generated from the filename. This location also contains the
     # user authentication tokens.
     getter config_location : String = Defaults.config_location
+
     def config_location=(location : String)
       conf_dir = File.dirname location
       Dir.mkdir_p conf_dir unless Dir.exists? conf_dir
       @config_location = location
     end
+
     # If the "flix_debug" environment variable is set to any value, or this
     # property is set, extra logging information will be sent to stdout.
     property debug : Bool = Defaults.debug
@@ -118,6 +120,7 @@ module Flix
 
     property key_file : String?
     property cert_file : String?
+
     def use_ssl?
       key_file && cert_file
     end
@@ -140,9 +143,11 @@ module Flix
 
     property log_file : IO = STDOUT
     setter log_level : Logger::Severity?
+
     def log_level
       @log_level ||= debug ? Logger::DEBUG : Logger::INFO
     end
+
     # A central interface for debug and admin log messages.
     def logger : Logger
       @logger ||= Logger.new io: log_file, level: log_level

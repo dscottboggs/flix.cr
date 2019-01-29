@@ -69,7 +69,6 @@ module Flix
     end
   end
 
-
   # this method returns the Proc which gets called when the /nfo endpoint is
   # reached.
   def metadata

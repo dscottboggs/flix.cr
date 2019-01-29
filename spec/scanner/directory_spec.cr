@@ -7,7 +7,7 @@ describe Flix::Scanner::MediaDirectory do
       unless (t = test_obj).nil?
         t.is_dir?.should be_true
         if t.is_dir?
-          t_obj = t.as(Flix::Scanner::MediaDirectory)
+          t_obj = t.as Flix::Scanner::MediaDirectory
           t_obj.path.should eq TEST_MEDIA_DIR
           t_obj.name.should eq "Media"
           t_obj.children.is_a?(Hash(String, Flix::Scanner::FileMetadata)).should be_true
@@ -29,7 +29,7 @@ describe Flix::Scanner::MediaDirectory do
       unless (t = test_obj).nil?
         t.is_dir?.should be_true
         if t.is_dir?
-          t_obj = t.as(Flix::Scanner::MediaDirectory)
+          t_obj = t.as Flix::Scanner::MediaDirectory
           json = JSON.parse t_obj.to_json
           json["title"].should eq "Media"
           t_obj.each_child do |hash, f_obj|
