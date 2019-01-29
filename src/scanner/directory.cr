@@ -109,10 +109,10 @@ module Flix
 
       def merge!(with config : ConfigData) : self
         super
-        if (new_thumb = config.thumbnail) && (thumb = @thumbnail)
-          thumb.merge! new_thumb
+        if (new_thumb = config.thumbnail)
+          thumbnail = PhotoFile.from_file_path? new_thumb
         end
-        config.contents.each do |pair|
+        config.content.each do |pair|
           id, metadata = pair
           if child = self[id]?
             child.merge! metadata

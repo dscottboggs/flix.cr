@@ -237,19 +237,15 @@ module Flix
           nil
         end
 
-        def initialize(from config : FileMetadata)
-          @title = config.name
+        def initialize(from file : FileMetadata)
+          @title = file.name
         end
       end
 
       abstract def config_data
 
       def merge!(with config : ConfigData) : self
-        raise <<-HERE unless same_path? as: config
-        attempted to merge #{path} with #{other.path} which is a different
-        location
-        HERE
-        name = config.title
+        @name = config.title
         self
       end
     end

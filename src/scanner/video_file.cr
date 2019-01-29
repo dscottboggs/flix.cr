@@ -23,7 +23,7 @@ module Flix
       def merge!(with config : ConfigData) : self
         super
         if thumb = config.thumbnail
-          thumbnail = thumb
+          @thumbnail = PhotoFile.from_file_path?(thumb).as PhotoFile?
         end
         self
       end
