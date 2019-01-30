@@ -21,4 +21,17 @@ describe Flix::Scanner::MediaDirectory::ConfigData do
 
     YAML
   end
+  it "reads in yaml" do
+    subject = Flix::Scanner::MediaDirectory::ConfigData.from_yaml <<-YAML
+    ---
+    title: Media
+    content:
+      m8eHp5iFD88:
+        title: Test Video - 2
+      9UUlUbVCDPY:
+        title: Test Video
+
+    YAML
+    
+  end
 end
