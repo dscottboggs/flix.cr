@@ -8,6 +8,7 @@ module Flix
     class VideoFile < FileMetadata
       class ConfigData < FileMetadata::ConfigData
         property thumbnail : String?
+
         def initialize(from video : VideoFile)
           @title = video.name
           @thumbnail = video.thumbnail.try &.path

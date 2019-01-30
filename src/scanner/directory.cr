@@ -96,10 +96,10 @@ module Flix
           @thumbnail = dir.thumbnail.try &.path
           @content = dir
             .children
-            .map { |k, v| { k, v.config_data }}
+            .map { |k, v| {k, v.config_data} }
             .to_h
-            # .each
-            # .map { |pair| {pair[0], pair[1].config_data} }
+          # .each
+          # .map { |pair| {pair[0], pair[1].config_data} }
         end
       end
 

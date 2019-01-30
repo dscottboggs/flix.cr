@@ -9,7 +9,8 @@ module Flix::Scanner
       def initialize(from photo : PhotoFile)
         @title = photo.name
       end
-      def initialize(@title);end
+
+      def initialize(@title); end
     end
 
     def config_data
