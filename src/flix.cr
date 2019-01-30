@@ -19,11 +19,7 @@ module Flix
 
   # Lazily load configuration from arguments to allow intercepting by tests
   def config
-    if @@config.nil?
-      @@config = Configuration.from_args ARGV
-    else
-      @@config.not_nil!
-    end
+    @@config ||= Configuration.from_args ARGV
   end
 
   # Set the configuration to an already initialized Flix::Configuration object.
