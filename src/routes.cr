@@ -12,6 +12,7 @@ module Flix
 
   # Begin serving the application
   def serve_up
+    Flix::MetadataConfig.synchronize!
     (config.processes - 1).times { fork { do_serve_up } }
     do_serve_up
   end
