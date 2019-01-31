@@ -34,8 +34,11 @@ module Flix
       # testing, IO) is empty. We should bail here for any other parse
       # exceptions, because if we don't the next step is to overwrite it.
       p! error
-      unless (error.line_number === 0) && (error.column_number === 0)
-        abort message: error.message, status: 64
+      unless (error.line_number < 10) && (error.column_number < 10)
+        raise YAML::ParseException.new(
+          "while reading in <<-YAML\n#{Flix.config.metadata_file.rewind.gets_to_end}\nYAML\n#{error.message}",
+          line_number: error.line_number,
+          column_number: error.column_number)
       end
     rescue error : Errno
       # In the case that the file isn't found, we're just going to ignore this

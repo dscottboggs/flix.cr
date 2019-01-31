@@ -18,7 +18,7 @@ module Flix
       end
 
       def clone
-        _clone_ = new @path, @stat, @thumbnail
+        _clone_ = self.class.new @path, @stat, @thumbnail
         _clone_.name = @name
         _clone_
       end

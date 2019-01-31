@@ -14,7 +14,7 @@ module Flix::Scanner
     end
 
     def clone
-      _clone_ = new @path, @stat
+      _clone_ = self.class.new @path, @stat
       _clone_.name = @name
       _clone_
     end

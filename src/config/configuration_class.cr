@@ -187,6 +187,7 @@ module Flix
     end
 
     setter testing : Bool?
+
     def testing?
       @testing ||= ENV["KEMAL_ENV"]? === "test"
     end

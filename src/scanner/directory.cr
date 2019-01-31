@@ -19,10 +19,10 @@ module Flix
         @name = FileMetadata.get_title_from @path
       end
 
-      private setter name
+      setter name
 
       def clone
-        _clone_ = new @path, @children, @thumbnail, @stat
+        _clone_ = self.class.new @path, @children.clone.tap { |children| pp! children }, @thumbnail, @stat
         _clone_.name = @name
         _clone_
       end
