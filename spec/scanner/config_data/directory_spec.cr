@@ -32,6 +32,5 @@ describe Flix::Scanner::MediaDirectory::ConfigData do
         title: Test Video
 
     YAML
-    
   end
 end

@@ -3,35 +3,51 @@ require "../scanner/metadata"
 
 module Flix
   module MetadataConfig
+    # A YAML File for lightweight configuration storage and modification.
     struct ConfigFile
       include YAML::Serializable
 
-      property folders : Hash(String, Flix::Scanner::FileMetadata::ConfigData)
+      # other stuff besides the folders can go here but we don't have anything
+      # else for now.
+      property folders : Hash(String, Flix::Scanner::MediaDirectory::ConfigData)
+
+      # This constructor accepts the Flix.config.dirs array and turns it into a
+      # a mapping appropriate for serialization to the config file.
+      def initialize(dirs : Array(Flix::Scanner::FileMetadata))
+        @folders = dirs.map { |dir| {dir.hash, dir.config_data} }.to_h
+      end
     end
+
+    private def config_file
+      Flix.config.metadata_file
+    end
+
     extend self
 
     def synchronize!
-      File.open File.join(Flix.config.config_location, "metadata.yaml") do |file|
-        cfg = ConfigFile.from_yaml file
-        Flix.config.dirs.each do |dir|
-          dir.merge! cfg[dir.hash]
-        end
+      cfg = ConfigFile.from_yaml Flix.config.metadata_file
+      Flix.config.dirs.each do |dir|
+        dir.merge! cfg.folders[dir.hash]
       end
-    rescue e : Errno
-      raise e unless e.value === Errno::ENOENT
+    rescue error : YAML::ParseException
+      # A YAML::ParseException will be raised if the file (or in the case of
+      # testing, IO) is empty. We should bail here for any other parse
+      # exceptions, because if we don't the next step is to overwrite it.
+      p! error
+      unless (error.line_number === 0) && (error.column_number === 0)
+        abort message: error.message, status: 64
+      end
+    rescue error : Errno
+      # In the case that the file isn't found, we're just going to ignore this
+      # error and move on with the `ensure` block. Otherwise, the exception is
+      # actually a problem and should be raised.
+      raise error unless error.errno === Errno::ENOENT
     ensure
-      File.open(File.join(Flix.config.config_location, "metadata.yml"), mode: "w") do |file|
-        YAML.build file do |builder|
-          builder.mapping do
-            builder.scalar "folders"
-            builder.mapping do
-              Flix.config.dirs.each do |dir|
-                builder.scalar dir.hash
-                builder.scalar dir.config_data
-              end
-            end
-          end
-        end
+      begin
+        Flix.config.metadata_file.rewind
+        ConfigFile.new(dirs: Flix.config.dirs).to_yaml Flix.config.metadata_file
+      ensure
+        Flix.config.metadata_file.close unless Flix.config.testing?
       end
     end
   end

@@ -13,6 +13,12 @@ module Flix::Scanner
       def initialize(@title); end
     end
 
+    def clone
+      _clone_ = new @path, @stat
+      _clone_.name = @name
+      _clone_
+    end
+
     def config_data
       ConfigData.new from: self
     end

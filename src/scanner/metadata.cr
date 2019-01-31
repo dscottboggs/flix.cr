@@ -26,6 +26,8 @@ module Flix
         @name = FileMetadata.get_title_from @path
       end
 
+      private setter name
+
       # returns false; Directory overloads this with true
       def is_dir?
         false
@@ -216,10 +218,12 @@ module Flix
         # Flix.logger.debug "all_videos after association: #{@@all_videos}"
       end
 
+      abstract def clone
+
       # ### <<<<     Configuration serialization section     >>>> #####
 
       # A convenience structure for converting to YAML.
-      abstract class ConfigData
+      class ConfigData
         include YAML::Serializable
         # The human-readable title of the associated file, which may be
         # overridden.

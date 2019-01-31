@@ -166,6 +166,31 @@ module Flix
       scan_dirs
     end
 
+    {% if env("KEMAL_ENV") == "test" %}
+    def dirs=(@initialized_dirs : Array(Scanner::MediaDirectory))
+    end
+    {% end %}
+
+    @testing_metadata_file : IO::Memory?
+    @metadata_file : IO?
+
+    def metadata_file(mode = "r")
+      yield metadata_file mode
+    end
+
+    def metadata_file(mode = "r") : IO
+      @metadata_file ||= if testing?
+                           @testing_metadata_file ||= IO::Memory.new
+                         else
+                           File.open(File.join(config_location, "metadata.yaml"), mode: mode)
+                         end
+    end
+
+    setter testing : Bool?
+    def testing?
+      @testing ||= ENV["KEMAL_ENV"]? === "test"
+    end
+
     private def scan_dirs
       @dirs.each do |dirpath|
         if (dir = Scanner::FileMetadata.from_file_path? dirpath) && dir.is_dir?

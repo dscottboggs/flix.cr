@@ -19,8 +19,22 @@ module Flix
         @name = FileMetadata.get_title_from @path
       end
 
+      private setter name
+
+      def clone
+        _clone_ = new @path, @children, @thumbnail, @stat
+        _clone_.name = @name
+        _clone_
+      end
+
       def children=(@children : Array(FileMetadata))
         @json_cache = nil
+      end
+
+      def children=(@children_hash : Hash(String, FileMetadata))
+        @json_cache = nil
+        @children = @children_hash.values
+        @children_hash
       end
 
       # Lazily translates the list of children into a hash-table, and returns
