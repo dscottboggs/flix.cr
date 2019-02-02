@@ -12,8 +12,19 @@ module Flix
 
   # Begin serving the application
   def serve_up
+    serve_up config.processes
+  end
+
+  private def serve_up(procs : Int)
     Flix::MetadataConfig.synchronize!
-    (config.processes - 1).times { fork { do_serve_up } }
+    (procs - 1).times do
+      fork do
+        do_serve_up
+      rescue e
+        STDERR.puts "Fork died!! Excpetion was: #{e.message}\nRespawning..."
+        serve_up 1
+      end
+    end
     do_serve_up
   end
 
