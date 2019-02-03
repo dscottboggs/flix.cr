@@ -3,7 +3,7 @@ describe Flix::Scanner::NFO do
   describe "Flix::Scanner::FileMetadata#nfo" do
     context TEST_FILES[:video_one].path do
       it "has the expected values" do
-        if video = Flix::Scanner::FileMetadata.all_videos["9UUlUbVCDPY"]?
+        if video = Flix.config.all_videos["9UUlUbVCDPY"]?
           nfo = video.nfo
           nfo.file_name.should eq "TestVideo.mp4"
           nfo.mime_type.should eq "video/mp4"

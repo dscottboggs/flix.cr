@@ -9,8 +9,8 @@ module Flix
     # The interface that all directory and media files implement and default
     # methods on those files.
     abstract class FileMetadata
-      class_property all_videos = Hash(String, VideoFile).new
-      class_property all_photos = Hash(String, PhotoFile).new
+      class_property all_photos = {} of String => PhotoFile
+      class_property all_videos = {} of String => VideoFile
       property path : String
       @name : String?
       setter name : String
@@ -146,76 +146,65 @@ module Flix
         filename.gsub(subs).strip
       end
 
-      def self.from_file_path?(filepath : String, stat : Crystal::System::FileInfo? = nil) : FileMetadata?
-        if info = File.info? filepath # skip everything if the file is not valid
-          if info.file? && (mime_type = MimeType.of filepath)
-            if mime_type.is_a_video?
-              # we got a video file!
-              return VideoFile.new path: filepath, stat: info
-            elsif mime_type.is_a_photo?
-              # we got a picture!
-              return PhotoFile.new path: filepath, stat: info
-            end
-          end
-          return unless info.directory?
-          videos_in_this_dir : UInt64 = 0
-          photos_in_this_dir : UInt64 = 0
-          children_dir_count : UInt64 = 0
-          out_dir = MediaDirectory.new path: filepath, stat: info
-
-          # time to figure out what all the children files are in this directory
-          Dir.open filepath, &.each_child do |file|
-            fullpath = File.join(filepath, file)
-            info = File.info fullpath
-
-            if new_file = from_file_path? fullpath
-              case new_file.mime_type
-              when nil then nil
-              when .is_a_dir?
-                new_file.parent = out_dir
-                out_dir << new_file.as MediaDirectory
-                children_dir_count += 1
-              when .is_a_photo?
-                photos_in_this_dir += 1
-                FileMetadata << new_file.as PhotoFile
-              when .is_a_video?
-                videos_in_this_dir += 1
-                new_file.parent = out_dir
-                out_dir << new_file.as VideoFile
-                FileMetadata << new_file.as VideoFile
-              end
-            end
-          end
-
-          # returns the first video in out_dir's children if out_dir only has one child video.
-          if videos_in_this_dir == 1 && (kids = out_dir.children) && kids.size == 1
-            return kids.first_value
-          end
-          out_dir
+      def self.from_file_path?(filepath : String) : FileMetadata?
+        if info = File.info? filepath
+          from_file_path? filepath, info
         end
       end
 
-      {% for filetype in {:video, :photo} %}
-      # add the {{filetype.id}} to the hash of all {{filetype.id}}s
-      def self.<<({{filetype.id}} : {{filetype.id.capitalize}}File)
-        @@all_{{filetype.id}}s[{{filetype.id}}.hash] = {{filetype.id}}
-      end
-      {% end %}
-
-      # run this once all the photos and videos are found. It assigns any photo
-      # with the same name (file basename formatted with `#get_title_from`) as a
-      # video to be that video's thumbnail.
-      def self.associate_thumbnails
-        photo_names = Hash(String, PhotoFile).new
-        @@all_photos.values.each { |img| photo_names[img.name] = img }
-        @@all_videos.each do |hash, vid|
-          photo = photo_names[vid.name]?
-          # Flix.logger.debug "Video name: #{vid.name}\nPhoto with that name? #{photo ? "yes" : "no"}"
-          vid.thumbnail = photo if photo
-          @@all_videos[hash] = vid
+      def self.from_file_path?(filepath : String, info : Crystal::System::FileInfo) : FileMetadata?
+        if info.file? && (mime_type = MimeType.of filepath)
+          if mime_type.is_a_video?
+            # we got a video file!
+            return VideoFile.new path: filepath, stat: info
+          elsif mime_type.is_a_photo?
+            # we got a picture!
+            return PhotoFile.new path: filepath, stat: info
+          end
         end
-        # p! @@all_videos.size
-        # Flix.logger.debug "all_videos after association: #{@@all_videos}"
+        return unless info.directory? # Ignore unknown filetypes
+        videos_in_this_dir : UInt64 = 0
+        photos_in_this_dir : UInt64 = 0
+        children_dir_count : UInt64 = 0
+        out_dir = MediaDirectory.new path: filepath, stat: info
+
+        # time to figure out what all the children files are in this directory
+        Dir.open filepath, &.each_child do |file|
+          fullpath = File.join(filepath, file)
+          info = File.info fullpath
+
+          if new_file = from_file_path? fullpath
+            case new_file.mime_type
+            when nil then nil
+            when .is_a_dir?
+              new_file.parent = out_dir
+              out_dir << new_file.as MediaDirectory
+              children_dir_count += 1
+            when .is_a_photo?
+              photos_in_this_dir += 1
+              @all_photos << new_file.as PhotoFile
+            when .is_a_video?
+              videos_in_this_dir += 1
+              new_file.parent = out_dir
+              out_dir << new_file.as VideoFile
+              @all_videos << new_file.as VideoFile
+            end
+          end
+        end
+
+        # returns the first video in out_dir's children if out_dir only has one child video.
+        if videos_in_this_dir == 1 && (kids = out_dir.children) && kids.size == 1
+          return kids.first_value
+        end
+        out_dir
+      end
+
+      def to_json
+        JSON.build { |builder| to_json builder }
+      end
+
+      def to_json(builder : JSON::Builder)
+        builder.object { builder.field name: hash, value: name }
       end
 
       abstract def clone

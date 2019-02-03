@@ -19,7 +19,7 @@ module Flix
 
   # Lazily load configuration from arguments to allow intercepting by tests
   def config
-    @@config ||= Configuration.from_args ARGV
+    @@config ||= Configuration.from_args(ARGV).tap { |conf| puts "new config! #{conf.inspect}" }
   end
 
   # Set the configuration to an already initialized Flix::Configuration object.

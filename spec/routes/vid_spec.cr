@@ -10,13 +10,9 @@ describe "/vid" do
       .reject("title", "thumbnail")
       .keys
       .first
-    # pp! Flix.config.all_videos.keys
     get "/vid/#{id}"
     response.status_code.should eq 200
-  end
-  it "responds with the expected headers" do
-    get "/dmp"
-    response.status_code.should eq 200
+    # check headers
     response.headers["Content-Type"]?.should eq "application/octet-stream"
   end
 end

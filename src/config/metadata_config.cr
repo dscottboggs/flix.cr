@@ -55,7 +55,7 @@ module Flix
       # exceptions, because if we don't the next step is to overwrite it.
       unless (error.line_number < 2) && (error.column_number < 10)
         raise YAML::ParseException.new(
-          String.build do |emsg|
+          message: String.build do |emsg|
             emsg << "while reading in << YAML\n"
             emsg << Flix.config.metadata_file.rewind.gets_to_end
             emsg << "\nYAML\ngot error:\n"

@@ -11,6 +11,7 @@ EXPECTED_DUMP  = [
 describe "/dmp" do
   it "dumps a given state" do
     get "/dmp"
+    response.status_code.should eq 200
     Array(Hash(String, String)).from_json(response.body).should eq EXPECTED_DUMP
   end
 end

@@ -12,12 +12,14 @@ module Flix
 
   # Begin serving the application
   def serve_up
-    serve_up config.processes
+    serve_up config.processes - 1
+    do_serve_up
   end
 
+  # spawn `procs` number of forked servers.
   private def serve_up(procs : Int)
     Flix::MetadataConfig.synchronize!
-    (procs - 1).times do
+    procs.times do
       fork do
         do_serve_up
       rescue e
@@ -25,7 +27,6 @@ module Flix
         serve_up 1
       end
     end
-    do_serve_up
   end
 
   private def do_serve_up
@@ -35,9 +36,8 @@ module Flix
     get("/ping") { "pong" }
     # output a representation of the file structure
     get "/dmp" do |ctx|
-      next unless user_found?(ctx)
-      Flix.logger.debug "got user #{ctx.current_user.inspect}"
-      Flix.config.dirs.to_json
+      next unless Flix.config.allow_unauthorized || ctx.user_found?
+      Flix.config.dirs.to_json.tap { |json| pp! json }
     end
     # serve an image
     get "/img", &serve_img
@@ -49,8 +49,16 @@ module Flix
     get "/nfo", &metadata
     get "/nfo/:id", &metadata
 
+    get "/syn" do |ctx|
+      Flix.config.reload!
+      "OK."
+    end
+
+    put "/vid/name/:id", &update_video_title
+    put "/vid/name", &update_video_title
+
     # the webroot for the server
-    get "/" { |context| context.redirect "/index.html" }
+    get("/", &.redirect "/index.html")
 
     public_folder config.webroot
     Kemal.config.env = "production" # unless Flix.config.debug
@@ -85,19 +93,20 @@ module Flix
   # reached.
   def metadata
     ->(context : HTTP::Server::Context) do
-      return unless user_found? context
+      return unless Flix.config.allow_unauthorized || context.user_found?
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
         return
       end
-      if video = Scanner::FileMetadata.all_videos[id]?
+      if video = Flix.config.all_videos[id]?
         video.nfo.to_json
-      elsif photo = Scanner::FileMetadata.all_photos[id]?
+      elsif photo = Flix.config.all_photos[id]?
         photo.nfo.to_json
       else
         page_not_found
       end
+      nil
     end
   end
 
@@ -106,7 +115,7 @@ module Flix
   def serve_img : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
-      return unless user_found?(context)
+      return unless Flix.config.allow_unauthorized || context.user_found?
       Flix.logger.debug context.current_user
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
@@ -115,12 +124,12 @@ module Flix
       end
       # try grabbing it as a thumbnail for a video first.
       Flix.logger.debug "got photo with ID #{id}"
-      if (video = Scanner::FileMetadata.all_videos[id]?) &&
+      if (video = Flix.config.all_videos[id]?) &&
          (photo = video.thumbnail) &&
          (File.exists? photo.path)
         Flix.logger.debug "sending photo #{photo.path} of type #{photo.mime_type}"
         send_file context, path: photo.path, mime_type: photo.mime_type.to_s
-      elsif (photo = Scanner::FileMetadata.all_photos[id]?) &&
+      elsif (photo = Flix.config.all_photos[id]?) &&
             (File.exists? photo.path)
         send_file context, path: photo.path, mime_type: Scanner::MimeType::Streamable.to_s
       else
@@ -135,14 +144,14 @@ module Flix
   def serve_video : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
-      return unless user_found?(context)
+      return unless Flix.config.allow_unauthorized || context.user_found?
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
         return
       end
       Flix.logger.debug "got video with ID #{id}"
-      if video = Scanner::FileMetadata.all_videos[id]?
+      if video = Flix.config.all_videos.tap { |vids| p! vids.keys, id }[id]?
         Flix.logger.debug "rendering video #{video.path} of type #{video.mime_type}"
         send_file context, path: video.path, mime_type: Scanner::MimeType::Streamable.to_s
       else
@@ -154,15 +163,24 @@ module Flix
     end
   end
 
-  # Returns true if the user is found or if
-  # Flix::Configuration.allow_unauthorized is set. Otherwise, sets the status
-  # to *403 Forbidden* and returns false.
-  def user_found?(context)
-    if context.current_user.try(&.["name"]?) || Flix.config.allow_unauthorized
-      true
-    else
-      context.response.status_code = 403
-      false
+  def update_video_title : HTTP::Server::Context -> Void
+    ->(context : HTTP::Server::Context) do
+      return unless Flix.config.allow_unauthorized || context.user_found?
+      id = context.params.url["id"]? || context.params.query["id"]?
+      if id.nil?
+        page_not_found
+        return
+      end
+      if video = Flix.config.all_videos[id]?
+        if body = context.request.body
+          video.name = body.gets_to_end
+        end
+        Flix::MetadataConfig.write_current_state
+        context.response << "OK."
+      else
+        page_not_found
+      end
+      nil
     end
   end
 

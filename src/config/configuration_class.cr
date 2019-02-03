@@ -3,9 +3,12 @@
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
 
 require "logger"
+require "./metadata_config_module"
 
 module Flix
   class Configuration
+    include MetadataConfiguration
+
     # The default values of each configuration options.
     struct Defaults
       class_property webroot : String
@@ -171,35 +174,53 @@ module Flix
     end
     {% end %}
 
-    @testing_metadata_file : IO::Memory?
-    @metadata_file : IO?
-
-    def metadata_file(mode = "r")
-      yield metadata_file mode
-    end
-
-    def metadata_file(mode = "r") : IO
-      @metadata_file ||= if testing?
-                           @testing_metadata_file ||= IO::Memory.new
-                         else
-                           File.open(File.join(config_location, "metadata.yaml"), mode: mode)
-                         end
-    end
-
     setter testing : Bool?
 
     def testing?
       @testing ||= ENV["KEMAL_ENV"]? === "test"
     end
 
+    def reload!
+      sync_metadata!
+      scan_dirs
+    end
+
+    {% for filetype in {:photo, :video} %}
+    property all_{{filetype.id}}s = Hash(String, Scanner::{{filetype.id.capitalize}}File).new
+    {% end %}
+
+    # run this once all the photos and videos are found. It assigns any photo
+    # with a similar name as a video to be that video's thumbnail.
+    #
+    # The comparison uses the video file basename formatted with
+    # `#get_title_from`, passed to `Levenshtein.find`, using the default
+    # tolerance.
+    def associate_thumbnails : Void
+      all_img_names = all_photos.map &.name
+      all_videos.each do |hash, vid|
+        if found_name = Levenshtein.find(vid.name, all_img_names)
+          vid.thumbnail = all_photos.find { |img| img.name === found_name }
+        end
+      end
+    end
+
     private def scan_dirs
       @dirs.each do |dirpath|
-        if (dir = Scanner::FileMetadata.from_file_path? dirpath) && dir.is_dir?
-          @initialized_dirs << dir.as Scanner::MediaDirectory
+        if (data = Scanner::MediaDirectory.config_data dirpath)
+          dir, vids, photos = data
+          if dir.is_dir?
+            @initialized_dirs << dir.as Scanner::MediaDirectory
+            @all_videos.concat vids
+            @all_photos.concat photos
+          end
         end
       end
       @initialized_dirs.reject! &.nil?
-      Flix::Scanner::FileMetadata.associate_thumbnails
+      {% for filetype in {:photo, :video} %}
+      @all_{{filetype.id}}s = Flix::Scanner::FileMetadata.all_{{filetype.id}}s
+      {% end %}
+      p! @initialized_dirs.to_json, @@all_photos.to_json, @@all_videos.to_json
+      associate_thumbnails
     end
 
     private def check_config_dir

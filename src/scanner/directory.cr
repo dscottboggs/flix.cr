@@ -97,6 +97,19 @@ module Flix
         true
       end
 
+      @all_videos = [] of VideoFile
+      @all_photos = [] of PhotoFile
+
+      # This method works like `.from_file_path?`, but it returns a triple of
+      # the directory, all its videos, and all its photos.
+      def self.config_data(filepath) : {FileMetadata, Array(VideoFile), Array(PhotoFile)}
+        {from_file_path?(filepath), @all_videos, @all_photos}
+      end
+
+      def self.config_data(filepath, stat) : {FileMetadata, Array(VideoFile), Array(PhotoFile)}
+        {from_file_path?(filepath, stat), @all_videos, @all_photos}
+      end
+
       # ### <<<<     Configuration serialization section     >>>> #####
 
       class ConfigData < FileMetadata::ConfigData
