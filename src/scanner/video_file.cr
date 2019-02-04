@@ -17,6 +17,14 @@ module Flix
         property thumbnail
       end
 
+      def self.from_file_path?(path : String?, stat = nil)
+        if info = stat || File.info? path
+          if MimeType.of(path).try &.is_a_photo?
+            new path, info
+          end
+        end
+      end
+
       def clone
         _clone_ = self.class.new @path, @stat, @thumbnail
         _clone_.name = @name

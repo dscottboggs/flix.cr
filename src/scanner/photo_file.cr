@@ -2,6 +2,7 @@
 # Copyright (C) 2018 D. Scott Boggs
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
 require "yaml"
+require "./metadata"
 
 module Flix::Scanner
   class PhotoFile < FileMetadata
@@ -11,6 +12,14 @@ module Flix::Scanner
       end
 
       def initialize(@title); end
+    end
+
+    def self.from_file_path?(path : String?, stat = nil)
+      if info = stat || File.info? path
+        if MimeType.of(path).try &.is_a_photo?
+          new path, info
+        end
+      end
     end
 
     def clone

@@ -97,19 +97,6 @@ module Flix
         true
       end
 
-      @all_videos = [] of VideoFile
-      @all_photos = [] of PhotoFile
-
-      # This method works like `.from_file_path?`, but it returns a triple of
-      # the directory, all its videos, and all its photos.
-      def self.config_data(filepath) : {FileMetadata, Array(VideoFile), Array(PhotoFile)}
-        {from_file_path?(filepath), @all_videos, @all_photos}
-      end
-
-      def self.config_data(filepath, stat) : {FileMetadata, Array(VideoFile), Array(PhotoFile)}
-        {from_file_path?(filepath, stat), @all_videos, @all_photos}
-      end
-
       # ### <<<<     Configuration serialization section     >>>> #####
 
       class ConfigData < FileMetadata::ConfigData
@@ -146,6 +133,68 @@ module Flix
           end
         end
         self
+      end
+
+      alias ScanResult = {FileMetadata, Array(VideoFile)?, Array(VideoFile)?}
+
+      def self.from_file_path?(path : String?,
+                               all_videos : Array(VideoFile)? = nil,
+                               all_photos : Array(PhotoFile)? = nil) : ScanResult?
+        if info = File.info? path
+          from_file_path? path, info, all_videos, all_photos
+        end
+      end
+
+      def self.from_file_path?(path : String,
+                               stat info : File::Info,
+                               all_videos : Array(VideoFile)? = nil,
+                               all_photos : Array(PhotoFile)? = nil) : ScanResult?
+        case MimeType.of path
+        when nil then nil
+        when .is_a_video?
+          ScanResult{VideoFile.from_file_path?(path: path, stat: info), all_videos, all_photos}
+        when .is_a_photo?
+          ScanResult{PhotoFile.from_file_path?(path: path, stat: info), all_videos, all_photos}
+        when .is_a_dir?
+          videos_in_this_dir : UInt64 = 0
+          photos_in_this_dir : UInt64 = 0
+          children_dir_count : UInt64 = 0
+          out_dir = MediaDirectory.new path: path, stat: info
+
+          # time to figure out what all the children files are in this directory
+          Dir.open path, &.each_child do |file|
+            fullpath = File.join(path, file)
+            info = File.info fullpath
+
+            if new_file = from_file_path?(fullpath)[0]
+              case new_file.mime_type
+              when nil then nil
+              when .is_a_dir?
+                new_file.parent = out_dir
+                out_dir << new_file.as MediaDirectory
+                children_dir_count += 1
+              when .is_a_photo?
+                photos_in_this_dir += 1
+                if pix = all_photos
+                  pix << new_file.as PhotoFile
+                end
+              when .is_a_video?
+                videos_in_this_dir += 1
+                new_file.parent = out_dir
+                out_dir << new_file.as VideoFile
+                if vids = all_videos
+                  vids << new_file.as VideoFile
+                end
+              end
+            end
+          end
+
+          # returns the first video in out_dir's children if out_dir only has one child video.
+          if videos_in_this_dir == 1 && (kids = out_dir.children) && kids.size == 1
+            return {kids.first_value, all_photos, all_videos}
+          end
+          ScanResult{out_dir, all_photos, all_videos}
+        end
       end
     end
   end

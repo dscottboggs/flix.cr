@@ -146,58 +146,7 @@ module Flix
         filename.gsub(subs).strip
       end
 
-      def self.from_file_path?(filepath : String) : FileMetadata?
-        if info = File.info? filepath
-          from_file_path? filepath, info
-        end
-      end
-
-      def self.from_file_path?(filepath : String, info : Crystal::System::FileInfo) : FileMetadata?
-        if info.file? && (mime_type = MimeType.of filepath)
-          if mime_type.is_a_video?
-            # we got a video file!
-            return VideoFile.new path: filepath, stat: info
-          elsif mime_type.is_a_photo?
-            # we got a picture!
-            return PhotoFile.new path: filepath, stat: info
-          end
-        end
-        return unless info.directory? # Ignore unknown filetypes
-        videos_in_this_dir : UInt64 = 0
-        photos_in_this_dir : UInt64 = 0
-        children_dir_count : UInt64 = 0
-        out_dir = MediaDirectory.new path: filepath, stat: info
-
-        # time to figure out what all the children files are in this directory
-        Dir.open filepath, &.each_child do |file|
-          fullpath = File.join(filepath, file)
-          info = File.info fullpath
-
-          if new_file = from_file_path? fullpath
-            case new_file.mime_type
-            when nil then nil
-            when .is_a_dir?
-              new_file.parent = out_dir
-              out_dir << new_file.as MediaDirectory
-              children_dir_count += 1
-            when .is_a_photo?
-              photos_in_this_dir += 1
-              @all_photos << new_file.as PhotoFile
-            when .is_a_video?
-              videos_in_this_dir += 1
-              new_file.parent = out_dir
-              out_dir << new_file.as VideoFile
-              @all_videos << new_file.as VideoFile
-            end
-          end
-        end
-
-        # returns the first video in out_dir's children if out_dir only has one child video.
-        if videos_in_this_dir == 1 && (kids = out_dir.children) && kids.size == 1
-          return kids.first_value
-        end
-        out_dir
-      end
+      # abstract def self.from_file_path?
 
       def to_json
         JSON.build { |builder| to_json builder }

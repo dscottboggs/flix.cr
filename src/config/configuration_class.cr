@@ -205,8 +205,10 @@ module Flix
     end
 
     private def scan_dirs
+      all_photos = [] of Scanner::PhotoFile
+      all_videos = [] of Scanner::VideoFile
       @dirs.each do |dirpath|
-        if (data = Scanner::MediaDirectory.config_data dirpath)
+        if data = Scanner::MediaDirectory.from_file_path? dirpath, all_videos, all_photos
           dir, vids, photos = data
           if dir.is_dir?
             @initialized_dirs << dir.as Scanner::MediaDirectory
@@ -216,10 +218,9 @@ module Flix
         end
       end
       @initialized_dirs.reject! &.nil?
-      {% for filetype in {:photo, :video} %}
-      @all_{{filetype.id}}s = Flix::Scanner::FileMetadata.all_{{filetype.id}}s
-      {% end %}
-      p! @initialized_dirs.to_json, @@all_photos.to_json, @@all_videos.to_json
+      @all_videos = all_videos.map { |vid| {vid.hash, vid} }.to_h
+      @all_photos = all_photos.map { |vid| {vid.hash, vid} }.to_h
+      p! @initialized_dirs.to_json, @all_photos.to_json, @all_videos.to_json
       associate_thumbnails
     end
 
