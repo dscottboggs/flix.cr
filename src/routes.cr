@@ -12,7 +12,7 @@ module Flix
 
   # Begin serving the application
   def serve_up
-    serve_up config.processes - 1
+    serve_up Flix.config.processes - 1
     do_serve_up
   end
 
@@ -60,7 +60,7 @@ module Flix
     # the webroot for the server
     get("/", &.redirect "/index.html")
 
-    public_folder config.webroot
+    public_folder Flix.config.webroot
     Kemal.config.env = "production" # unless Flix.config.debug
     if ((env = ENV["KEMAL_ENV"]?) && (env == "test"))
       # kemal-spec only works like this
@@ -69,18 +69,18 @@ module Flix
       # http://kemalcr.com/cookbook/reuse_port/
       Kemal.run do |conf|
         if server = conf.server
-          if config.use_ssl?
+          if Flix.config.use_ssl?
             ssl = Kemal::SSL.new
-            ssl.cert_file = config.cert_file.not_nil!
-            ssl.key_file = config.key_file.not_nil!
+            ssl.cert_file = Flix.config.cert_file.not_nil!
+            ssl.key_file = Flix.config.key_file.not_nil!
             conf.ssl = ssl.context
             server.bind_tls(
               host: "0.0.0.0",
-              port: config.port.to_i,
+              port: Flix.config.port.to_i,
               context: conf.ssl.not_nil!,
-              reuse_port: config.processes > 1)
+              reuse_port: Flix.config.processes > 1)
           else
-            server.bind_tcp("0.0.0.0", config.port.to_i, reuse_port: config.processes > 1)
+            server.bind_tcp("0.0.0.0", Flix.config.port.to_i, reuse_port: Flix.config.processes > 1)
           end
         else
           raise "got nil server! look at config class"
