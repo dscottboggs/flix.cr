@@ -3,13 +3,13 @@ describe Flix::Scanner::NFO do
   describe "Flix::Scanner::FileMetadata#nfo" do
     context TEST_FILES[:video_one].path do
       it "has the expected values" do
-        if video = Flix::Scanner::FileMetadata.all_videos["9UUlUbVCDPY"]?
+        if video = Flix::Scanner::FileMetadata.all_videos[Flix::Scanner.hash VIDEO_ONE_PATH]?
           nfo = video.nfo
           nfo.file_name.should eq "TestVideo.mp4"
           nfo.mime_type.should eq "video/mp4"
-          nfo.parent_dir.should eq "E9zk2zyWEDo"
+          nfo.parent_dir.should eq Flix::Scanner.hash TEST_MEDIA_DIR
         else
-          fail "didn't find video with ID s4cTVQzqU0A in #{Flix.config.dirs.to_json}"
+          fail "didn't find video with ID #{Flix::Scanner.hash VIDEO_ONE_PATH} in #{Flix.config.dirs.to_json}"
         end
       end
     end
@@ -21,7 +21,7 @@ describe Flix::Scanner::NFO do
           nfo.mime_type.should eq "inode/directory"
           nfo.parent_dir.should eq ""
         else
-          fail "didn't find video with ID s4cTVQzqU0A in #{Flix.config.dirs.to_json}"
+          fail "Flix.config.dirs # => #{Flix.config.dirs}"
         end
       end
     end

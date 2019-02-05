@@ -14,9 +14,9 @@ describe Flix::Scanner::MediaDirectory::ConfigData do
     ---
     title: Media
     content:
-      m8eHp5iFD88:
+      #{Flix::Scanner.hash VIDEO_TWO_PATH}:
         title: Test Video - 2
-      9UUlUbVCDPY:
+      #{Flix::Scanner.hash VIDEO_ONE_PATH}:
         title: Test Video
 
     YAML
@@ -26,9 +26,9 @@ describe Flix::Scanner::MediaDirectory::ConfigData do
     ---
     title: Media
     content:
-      m8eHp5iFD88:
+      #{Flix::Scanner.hash VIDEO_TWO_PATH}:
         title: Test Video - 2
-      9UUlUbVCDPY:
+      #{Flix::Scanner.hash VIDEO_ONE_PATH}:
         title: Test Video
 
     YAML

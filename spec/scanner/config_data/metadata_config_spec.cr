@@ -12,14 +12,14 @@ describe Flix::MetadataConfig do
     Flix.config.metadata_file.to_s.should eq <<-YAML
     ---
     folders:
-      E9zk2zyWEDo:
+      #{Flix::Scanner.hash TEST_MEDIA_DIR}:
         title: Media
         content:
-          m8eHp5iFD88:
+          #{Flix::Scanner.hash TEST_FILES[:video_two].path}:
             title: Test Video - 2
-          9UUlUbVCDPY:
+          #{Flix::Scanner.hash TEST_FILES[:video_one].path}:
             title: Test Video
-            thumbnail: /home/scott/Documents/code/flix/test_data/media/TestVideo.jpg
+            thumbnail: #{TEST_FILES[:image_one].path}
 
     YAML
 
@@ -32,14 +32,14 @@ describe Flix::MetadataConfig do
     modified = <<-YAML
     ---
     folders:
-      E9zk2zyWEDo:
+      #{Flix::Scanner.hash TEST_MEDIA_DIR}:
         title: Media
         content:
-          m8eHp5iFD88:
+          #{Flix::Scanner.hash TEST_FILES[:video_two].path}:
             title: Test Video - 2
-          9UUlUbVCDPY:
+          #{Flix::Scanner.hash TEST_FILES[:video_one].path}:
             title: Updated title!
-            thumbnail: /home/scott/Documents/code/flix/test_data/media/TestVideo.jpg
+            thumbnail: #{File.join Dir.current, TEST_FILES[:image_one].path}
 
     YAML
     if (mf = Flix.config.metadata_file).is_a? IO::Memory
