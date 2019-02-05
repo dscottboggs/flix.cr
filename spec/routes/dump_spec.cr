@@ -12,5 +12,6 @@ describe "/dmp" do
   it "dumps a given state" do
     get "/dmp"
     Array(Hash(String, String)).from_json(response.body).should eq EXPECTED_DUMP
+    response.headers["Content-Type"]?.should eq "application/json"
   end
 end

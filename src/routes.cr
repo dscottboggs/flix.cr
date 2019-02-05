@@ -37,6 +37,7 @@ module Flix
     get "/dmp" do |ctx|
       next unless user_found?(ctx)
       Flix.logger.debug "got user #{ctx.current_user.inspect}"
+      ctx.response.content_type = "application/json"
       Flix.config.dirs.to_json
     end
     # serve an image
