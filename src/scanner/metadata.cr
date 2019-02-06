@@ -155,9 +155,9 @@ module Flix
             elsif mime_type.is_a_photo?
               # we got a picture!
               return PhotoFile.new path: filepath, stat: info
+            else return
             end
           end
-          return unless info.directory?
           videos_in_this_dir : UInt64 = 0
           photos_in_this_dir : UInt64 = 0
           children_dir_count : UInt64 = 0
@@ -165,7 +165,7 @@ module Flix
 
           # time to figure out what all the children files are in this directory
           Dir.open filepath, &.each_child do |file|
-            fullpath = File.join(filepath, file)
+            fullpath = File.join filepath, file
             info = File.info fullpath
 
             if new_file = from_file_path? fullpath
