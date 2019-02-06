@@ -51,13 +51,12 @@ readability and flexible syntax makes development more pleasant.
 Streama is built using the Grails platform, which is a dynamically-typed language which targets the
 JVM. I haven't tested it personally, but I would assume that performance on such a platform would be
 greatly reduced compared to native Crystal binaries. Additionally, Streama implements many features
-I find to be undesirable. See the **Features that won't be implemented** section.
+I find to be undesirable. See the [Features that won't be implemented](https://github.com/dscottboggs/flix.cr#features-that-wont-be-implemented) section.
 
 
 ## Installation
 
-Crystal allows compiling to a single self-contained executable. I'll drop one of
-those in the "releases" section of the repo.
+Crystal allows compiling to a single self-contained executable. Please see the [releases](https://github.com/dscottboggs/flix.cr/releases/latest) section for these executable files.
 
 Please note that statically-linked crystal binaries still require the presence
 of glibc.
@@ -146,7 +145,7 @@ Using the appropriate values (substitute the hostname for your own and set the
 appropriate path to your media directory), this deployment is as simple as:
 
 1. point your DNS at your IP
-2. Open ports 80 and 443 for traefik?
+2. Open ports 80 and 443
 3. run `docker-compose up -d`
 
 That's it!
