@@ -174,16 +174,17 @@ module Flix
     @testing_metadata_file : IO::Memory?
     @metadata_file : IO?
 
-    def metadata_file(mode = "r")
-      yield metadata_file mode
-    end
-
-    def metadata_file(mode = "r") : IO
-      @metadata_file ||= if testing?
-                           @testing_metadata_file ||= IO::Memory.new
-                         else
-                           File.open(File.join(config_location, "metadata.yaml"), mode: mode)
-                         end
+    def metadata_file(mode = "r", &block : IO -> _)
+      if testing?
+        yield @testing_metadata_file ||= IO::Memory.new
+      else
+        File.open(
+          File.join(
+            config_location, "metadata.yaml"
+          ),
+          mode: mode
+        ) { |file| yield file }
+      end
     end
 
     setter testing : Bool?

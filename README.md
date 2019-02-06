@@ -25,6 +25,7 @@ components as possible.
  - Password-protected API and interface
  - SSL integration
  - compiles to a single binary
+ - Runtime safety: All Crystal code is type-safe and null-safe, despite its simple syntax.
 
 #### Yet to be implemented
 See the [issues](https://github.com/dscottboggs/flix.cr/issues) page

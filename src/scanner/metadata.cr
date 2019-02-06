@@ -155,7 +155,8 @@ module Flix
             elsif mime_type.is_a_photo?
               # we got a picture!
               return PhotoFile.new path: filepath, stat: info
-            else return
+            else
+              return
             end
           end
           videos_in_this_dir : UInt64 = 0
