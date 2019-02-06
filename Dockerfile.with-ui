@@ -12,7 +12,7 @@ RUN apt-get update &&\
     apt-get upgrade -yqq \
       wget git libz-dev libssl-dev libgc1c2 \
       make gcc libpcre3-dev libevent-dev \
-      libmagic-dev curl &&\
+      libmagic-dev libyaml-dev curl &&\
     wget --output-document "/tmp/crystal.deb" \
       "https://github.com/crystal-lang/crystal/releases/download/0.27.0/crystal_0.27.0-1_amd64.deb" &&\
     dpkg -i /tmp/crystal.deb;\
