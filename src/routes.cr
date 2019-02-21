@@ -49,6 +49,9 @@ module Flix
     # serve metadata
     get "/nfo", &metadata
     get "/nfo/:id", &metadata
+    # Serve subtitles
+    get "/ass", &subtitles
+    get "/ass/:id", &subtitles
 
     # the webroot for the server
     get "/" { |context| context.redirect "/index.html" }
@@ -86,7 +89,7 @@ module Flix
   # reached.
   def metadata
     ->(context : HTTP::Server::Context) do
-      return unless user_found? context
+      return unless user_found? in_headers_or_params_of: context
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
@@ -107,7 +110,7 @@ module Flix
   def serve_img : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
-      return unless user_found?(context)
+      return unless user_found? in_headers_or_params_of: context
       Flix.logger.debug context.current_user
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
@@ -136,7 +139,7 @@ module Flix
   def serve_video : HTTP::Server::Context -> Void
     # return a proc literal from a method to use on more than one route because DRY
     ->(context : HTTP::Server::Context) do
-      return unless user_found?(context)
+      return unless user_found? in_headers_or_params_of: context
       id = context.params.url["id"]? || context.params.query["id"]?
       if id.nil?
         page_not_found
@@ -155,10 +158,26 @@ module Flix
     end
   end
 
+  def subtitles : HTTP::Server::Context -> Void
+    ->(context : HTTP::Server::Context) do
+      return unless user_found? in_headers_or_params_of: context
+      id = context.params.url["id"]? || context.params.query["id"]? || return page_not_found
+      Flix.logger.debug "got request for subtitles with ID #{id}"
+      if subs = Scanner::FileMetadata.all_subtitles[id]? ||
+                Scanner::FileMetadata.all_videos[id]?.try &.subtitles
+        # some relevant subtitles were found either by ID or by their associated
+        # video's ID
+        subs.send(to: context) { page_not_found }
+      else
+        page_not_found
+      end
+    end
+  end
+
   # Returns true if the user is found or if
   # Flix::Configuration.allow_unauthorized is set. Otherwise, sets the status
   # to *403 Forbidden* and returns false.
-  def user_found?(context)
+  def user_found?(in_headers_or_params_of context)
     if context.current_user.try(&.["name"]?) || Flix.config.allow_unauthorized
       true
     else
@@ -171,5 +190,6 @@ module Flix
   macro page_not_found
     context.response.status_code = 404
     render_404
+    nil
   end
 end

@@ -3,6 +3,7 @@
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
 require "json"
 require "./scrypt"
+require "../flix"
 
 module Flix::Authentication
   USERS_FILE    = File.join(Flix.config.config_location, "users.auth") # Where the users will be stored on disk

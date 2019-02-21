@@ -99,25 +99,26 @@ module Flix
 
       # ### <<<<     Configuration serialization section     >>>> #####
 
-      class ConfigData < FileMetadata::ConfigData
+      class ConfigData
+        include YAML::Serializable
         property title : String
         property thumbnail : String?
         # getter content : Iterator({String, FileMetadata::ConfigData})
         getter content : Hash(String, FileMetadata::ConfigData)
 
         def initialize(from dir : MediaDirectory)
-          super
+          @title = dir.name
           @thumbnail = dir.thumbnail.try &.path
           @content = dir
             .children
-            .map { |k, v| {k, v.config_data} }
-            .to_h
+            .map { |k, v| {k, v.config_data.as FileMetadata::ConfigData} }
+            .to_h.as Hash(String, FileMetadata::ConfigData)
           # .each
           # .map { |pair| {pair[0], pair[1].config_data} }
         end
       end
 
-      def config_data
+      def config_data : ConfigData
         ConfigData.new from: self
       end
 

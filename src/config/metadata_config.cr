@@ -1,3 +1,6 @@
+# Flix -- A media server in the Crystal Language with Kemal.cr
+# Copyright (C) 2018 D. Scott Boggs
+# See LICENSE.md for the terms of the AGPL under which this software can be used.
 require "yaml"
 require "../scanner/metadata"
 
@@ -9,7 +12,7 @@ module Flix
 
       # other stuff besides the folders can go here but we don't have anything
       # else for now.
-      property folders : Hash(String, Flix::Scanner::MediaDirectory::ConfigData)
+      property folders : Hash( String, Flix::Scanner::MediaDirectory::ConfigData )
 
       # This constructor accepts the Flix.config.dirs array and turns it into a
       # a mapping appropriate for serialization to the config file.

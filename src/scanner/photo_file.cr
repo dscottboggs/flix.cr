@@ -5,12 +5,17 @@ require "yaml"
 
 module Flix::Scanner
   class PhotoFile < FileMetadata
-    class ConfigData < FileMetadata::ConfigData
-      def initialize(from photo : PhotoFile)
-        @title = photo.name
+    class ConfigData
+      include YAML::Serializable
+      property title : String
+
+      def initialize(from file : FileMetadata)
+        @title = file.name
       end
 
-      def initialize(@title); end
+      def thumbnail
+        nil
+      end
     end
 
     def clone

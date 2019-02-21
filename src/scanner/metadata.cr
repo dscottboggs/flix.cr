@@ -1,7 +1,6 @@
 # Flix -- A media server in the Crystal Language with Kemal.cr
 # Copyright (C) 2018 D. Scott Boggs
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
-require "yaml"
 require "./mime_type"
 
 module Flix
@@ -11,22 +10,23 @@ module Flix
     abstract class FileMetadata
       class_property all_videos = Hash(String, VideoFile).new
       class_property all_photos = Hash(String, PhotoFile).new
-      property path : String
+      class_property all_subtitles = Hash(String, SubtitleFile).new
       @name : String?
-      setter name : String
       @hash : String?
       @stat : File::Info?
-      property thumbnail : PhotoFile?
+      private setter mime_type : MimeType?
+      getter mime_type
+      setter name : String
+      property path : String
       property parent : MediaDirectory? = nil
-      @mime_type : MimeType?
+      property thumbnail : PhotoFile?
 
       def initialize(@path : String,
                      @stat : File::Info? = nil,
-                     @thumbnail : PhotoFile? = nil)
+                     @thumbnail : PhotoFile? = nil,
+                     @parent : MediaDirectory? = nil)
         @name = FileMetadata.get_title_from @path
       end
-
-      private setter name
 
       # returns false; Directory overloads this with true
       def is_dir?
@@ -184,6 +184,16 @@ module Flix
                 new_file.parent = out_dir
                 out_dir << new_file.as VideoFile
                 FileMetadata << new_file.as VideoFile
+              when .could_be_subtitles?
+                if captions = Subtitles.parse filepath: fullpath
+                  # OPTIMIZE: This eagerly loads all successfully interpreted
+                  # subtitles into memory.
+                  subs = new_file.as Scanner::SubtitleFile
+                  subs.content = Subtitles::ASS.new(captions).content
+                  subs.mime_type = SubtitleFile.mime_type of: captions
+                  subs.parent = out_dir
+                  FileMetadata << subs
+                end
               end
             end
           end
@@ -196,7 +206,7 @@ module Flix
         end
       end
 
-      {% for filetype in {:video, :photo} %}
+      {% for filetype in {:video, :photo, :subtitle} %}
       # add the {{filetype.id}} to the hash of all {{filetype.id}}s
       def self.<<({{filetype.id}} : {{filetype.id.capitalize}}File)
         @@all_{{filetype.id}}s[{{filetype.id}}.hash] = {{filetype.id}}
@@ -221,31 +231,6 @@ module Flix
 
       abstract def clone
 
-      # ### <<<<     Configuration serialization section     >>>> #####
-
-      # A convenience structure for converting to YAML.
-      class ConfigData
-        include YAML::Serializable
-        # The human-readable title of the associated file, which may be
-        # overridden.
-        property title : String
-
-        # An assiciated thumbnail. Nil by default. Subclasses which are
-        # able to associate thumbnails should override this.
-        def thumbnail
-          nil
-        end
-
-        # :nodoc:
-        def content
-          nil
-        end
-
-        def initialize(from file : FileMetadata)
-          @title = file.name
-        end
-      end
-
       abstract def config_data
 
       def merge!(with config : ConfigData) : self
@@ -255,3 +240,5 @@ module Flix
     end
   end
 end
+
+require "./metadata/*"

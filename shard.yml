@@ -28,5 +28,9 @@ dependencies:
   # for hashing passwords
   scrypt:
     github: ysbaddaden/scrypt-crystal
+  # For converting subtitles to Substation format for the video player
+  subtitles:
+    github: dscottboggs/subtitles.cr
+    branch: master
 
 license: AGPL
