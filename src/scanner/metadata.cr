@@ -155,6 +155,14 @@ module Flix
             elsif mime_type.is_a_photo?
               # we got a picture!
               return PhotoFile.new path: filepath, stat: info
+            elsif mime_type.could_be_subtitles?
+              # We got a plain-text file which might contain subtitles
+              if subs_class = Subtitles.detect(file: filepath)
+                subs = SubtitleFile.new(path: filepath)
+                subs.mime_type = SubtitleFile.mime_type of: subs_class
+                return subs
+              end
+              return
             else
               return
             end
@@ -184,23 +192,10 @@ module Flix
                 new_file.parent = out_dir
                 out_dir << new_file.as VideoFile
                 FileMetadata << new_file.as VideoFile
-              when .could_be_subtitles?
-                Flix.logger.debug "found potential subtitle at #{fullpath}"
-                if captions = Subtitles.detect(file: fullpath).try &.new filepath: fullpath
-                  Flix.logger.debug "subtitle recognize as #{captions.class} type"
-                  subs = new_file.as Scanner::SubtitleFile
-                  if {Subtitles::ASS, Subtitles::SSA}.includes? captions.class
-                    subs.content = captions.content
-                  else
-                    # it's a non-substation formatted, but recognized subtitle.
-                    # the `#send` method of SubtitleFile will lazily load the
-                    # converted version into `SubtitleFile@content` when it is
-                    # requested the first time.
-                    subs.mime_type = SubtitleFile.mime_type of: captions
-                  end
-                  subs.parent = out_dir
-                  FileMetadata << subs
-                end
+              when .is_a_subtitle?
+                subs = new_file.as SubtitleFile
+                subs.parent = out_dir
+                FileMetadata << subs
               end
             end
           end
@@ -224,16 +219,21 @@ module Flix
       # with the same name (file basename formatted with `#get_title_from`) as a
       # video to be that video's thumbnail.
       def self.associate_thumbnails
-        photo_names = Hash(String, PhotoFile).new
-        @@all_photos.values.each { |img| photo_names[img.name] = img }
         @@all_videos.each do |hash, vid|
-          photo = photo_names[vid.name]?
-          # Flix.logger.debug "Video name: #{vid.name}\nPhoto with that name? #{photo ? "yes" : "no"}"
-          vid.thumbnail = photo if photo
-          @@all_videos[hash] = vid
+          if thumb = @@all_photos.values.find { |pic| pic.name == vid.name }
+            vid.thumbnail = thumb
+            @@all_videos[hash] = vid
+          end
         end
-        # p! @@all_videos.size
-        # Flix.logger.debug "all_videos after association: #{@@all_videos}"
+      end
+
+      def self.associate_subtitles
+        @@all_videos.each do |hash, vid|
+          if subs = @@all_subtitles.values.find { |s| s.name == vid.name }
+            vid.subtitles = subs
+            @@all_videos[hash] = vid
+          end
+        end
       end
 
       abstract def clone

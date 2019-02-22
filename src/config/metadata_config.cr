@@ -12,11 +12,11 @@ module Flix
 
       # other stuff besides the folders can go here but we don't have anything
       # else for now.
-      property folders : Hash( String, Flix::Scanner::MediaDirectory::ConfigData )
+      property folders : Hash( String, Scanner::MediaDirectory::ConfigData )
 
       # This constructor accepts the Flix.config.dirs array and turns it into a
       # a mapping appropriate for serialization to the config file.
-      def initialize(dirs : Array(Flix::Scanner::FileMetadata))
+      def initialize(dirs : Array(Scanner::FileMetadata))
         @folders = dirs.map { |dir| {dir.hash, dir.config_data} }.to_h
       end
     end

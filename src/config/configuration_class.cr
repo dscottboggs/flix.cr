@@ -3,6 +3,7 @@
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
 
 require "logger"
+require "./metadata_config"
 
 module Flix
   class Configuration

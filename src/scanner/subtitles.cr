@@ -47,11 +47,16 @@ module Flix::Scanner
     end
 
     def self.mime_type(of captions : Subtitles::Format) : Scanner::MimeType?
-      case captions.class
-      when Subtitles::ASS, Subtitles::SSA then Scanner::MimeType::SubStationSubtitles
-      when Subtitles::SRT                 then Scanner::MimeType::SubRipSubtitles
-      when Subtitles::JSON                then Scanner::MimeType::JSONSubtitles
-        # else nil (implicit)
+      mime_type of: captions.class
+    end
+
+    def self.mime_type(of _class : Subtitles::Format.class) : Scanner::MimeType?
+      if {Subtitles::ASS, Subtitles::SSA}.includes? _class
+        Scanner::MimeType::SubStationSubtitles
+      elsif _class == Subtitles::SRT
+        Scanner::MimeType::SubRipSubtitles
+      elsif _class == Subtitles::JSON
+        Scanner::MimeType::JSONSubtitles
       end
     end
 
