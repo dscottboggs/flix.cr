@@ -40,6 +40,15 @@ module Flix
       ctx.response.content_type = "application/json"
       Flix.config.dirs.to_json
     end
+
+    get "/scan" do |ctx|
+      Flix::MetadataConfig.synchronize!
+      ctx.puts "OK."
+    rescue error : Exception
+      ctx.response.status_code = 500
+      ctx.response.puts "Error synchronizing files:"
+      ctx.response.puts error.message.inspect
+    end
     # serve an image
     get "/img", &serve_img
     get "/img/:id", &serve_img
