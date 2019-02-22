@@ -43,7 +43,7 @@ module Flix
 
     get "/scan" do |ctx|
       Flix::MetadataConfig.synchronize!
-      ctx.puts "OK."
+      ctx.response.puts "OK."
     rescue error : Exception
       ctx.response.status_code = 500
       ctx.response.puts "Error synchronizing files:"
