@@ -6,11 +6,5 @@ require "../*"
 
 # A convenience structure for converting to YAML.
 abstract class Flix::Scanner::FileMetadata
-  # :nodoc:
-  Inherited = { VideoFile, PhotoFile, MediaDirectory, SubtitleFile }
-
-  # The union between all types inherited from this interface
-  {%begin%}
-  alias ConfigData = {%for t, i in Inherited%}Flix::Scanner::{{t.id}}::ConfigData {%if i<(Inherited.size-1)%}| {%end%}{%end%}
-  {%end%}
+  alias ConfigData = Union( VideoFile::ConfigData, PhotoFile::ConfigData, MediaDirectory::ConfigData, SubtitleFile::ConfigData )
 end
