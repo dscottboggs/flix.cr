@@ -168,8 +168,23 @@ module Flix
     end
 
     {% if env("KEMAL_ENV") == "test" %}
+    # When specs are run, they MUST be run with the $KEMAL_ENV environment
+    # variable set to "test". So, lets take advantage of that to compile some
+    # convenience methods for testing.
+
     def dirs=(@initialized_dirs : Array(Scanner::MediaDirectory))
     end
+
+    def testing?
+      true
+    end
+
+    {% else %}
+
+    def testing?
+      false
+    end
+
     {% end %}
 
     @testing_metadata_file : IO::Memory?
@@ -189,10 +204,6 @@ module Flix
     end
 
     setter testing : Bool?
-
-    def testing?
-      @testing ||= ENV["KEMAL_ENV"]? === "test"
-    end
 
     private def scan_dirs
       @dirs.each do |dirpath|
