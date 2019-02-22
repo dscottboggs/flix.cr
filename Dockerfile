@@ -6,7 +6,7 @@ RUN apt-get update &&\
       make gcc libpcre3-dev libevent-dev \
       libmagic-dev libyaml-dev curl &&\
     wget --output-document "/tmp/crystal.deb" \
-      "https://github.com/crystal-lang/crystal/releases/download/0.27.0/crystal_0.27.0-1_amd64.deb" &&\
+      "https://github.com/crystal-lang/crystal/releases/download/0.27.2/crystal_0.27.2-1_amd64.deb" &&\
     dpkg -i /tmp/crystal.deb;\
     apt-get install -fyqq &&\
     mkdir /flix.cr

@@ -1,12 +1,16 @@
 FROM node:8-alpine as webui
+
 # download and build the web interface
 RUN apk add git &&\
     git clone https://github.com/dscottboggs/flix-webui.git /flix-webui &&\
     cd /flix-webui &&\
     npm install &&\
     npm run build
+
+
 # run the normal build process
 FROM ubuntu:18.04
+
 # install dependencies
 RUN apt-get update &&\
     apt-get upgrade -yqq \
@@ -14,28 +18,35 @@ RUN apt-get update &&\
       make gcc libpcre3-dev libevent-dev \
       libmagic-dev libyaml-dev curl &&\
     wget --output-document "/tmp/crystal.deb" \
-      "https://github.com/crystal-lang/crystal/releases/download/0.27.0/crystal_0.27.0-1_amd64.deb" &&\
+      "https://github.com/crystal-lang/crystal/releases/download/0.27.2/crystal_0.27.2-1_amd64.deb" &&\
     dpkg -i /tmp/crystal.deb;\
     apt-get install -fyqq &&\
     mkdir /flix.cr
 WORKDIR /flix.cr
+
 # install dependencies and cache before copying so we don't have to redo this
 # step every time any file (including this one) changes in the whole source tree
 COPY shard.yml /flix.cr
 RUN shards install
+
 # clean up
 RUN apt-get purge wget git curl -qqy &&\
     apt-get autoremove --purge -qqy &&\
     apt-get clean -yqq
+
 # copy the rest of the stuff over
 COPY . /flix.cr
+
 # compile and install
 RUN /usr/bin/crystal build --release --static -o /usr/local/bin/flix src/flix.cr &&\
     chmod 555 /usr/local/bin/flix &&\
     mkdir /config /webui
 
+# bring in the webui from the other stage
 COPY --from=webui /flix-webui/build /webui
 
+# Add the ability to navigate the docs from https://the.url/docs
 RUN ln -s /flix.cr/docs /webui/
 
+# start the entrypoint shell script
 ENTRYPOINT /flix.cr/docker-entrypoint.sh

@@ -38,5 +38,5 @@ shards:
 
   subtitles:
     github: dscottboggs/subtitles.cr
-    commit: 576f45023cd73ddebe8a6ddbdf33323f93675e01
+    commit: 000effc904408d10357771ed2a43683f2491f057
 
