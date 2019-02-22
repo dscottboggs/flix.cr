@@ -46,7 +46,7 @@ module Flix::Scanner
       yield
     end
 
-    def self.mime_type(of captions : Subtitles::Captions) : Scanner::MimeType?
+    def self.mime_type(of captions : Subtitles::Format) : Scanner::MimeType?
       case captions.class
       when Subtitles::ASS, Subtitles::SSA then Scanner::MimeType::SubStationSubtitles
       when Subtitles::SRT                 then Scanner::MimeType::SubRipSubtitles
@@ -56,10 +56,10 @@ module Flix::Scanner
     end
 
     def clone
-      _clone_ = self.class.new @path, @stat
-      _clone_.content = content
-      _clone_.mime_type = mime_type
-      _clone_
+      the_clone = self.class.new @path, @stat
+      the_clone.content = content
+      the_clone.mime_type = mime_type
+      the_clone
     end
 
     def config_data

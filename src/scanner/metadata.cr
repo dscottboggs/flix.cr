@@ -185,12 +185,19 @@ module Flix
                 out_dir << new_file.as VideoFile
                 FileMetadata << new_file.as VideoFile
               when .could_be_subtitles?
-                if captions = Subtitles.parse filepath: fullpath
-                  # OPTIMIZE: This eagerly loads all successfully interpreted
-                  # subtitles into memory.
+                Flix.logger.debug "found potential subtitle at #{fullpath}"
+                if captions = Subtitles.detect(file: fullpath).try &.new filepath: fullpath
+                  Flix.logger.debug "subtitle recognize as #{captions.class} type"
                   subs = new_file.as Scanner::SubtitleFile
-                  subs.content = Subtitles::ASS.new(captions).content
-                  subs.mime_type = SubtitleFile.mime_type of: captions
+                  if {Subtitles::ASS, Subtitles::SSA}.includes? captions.class
+                    subs.content = captions.content
+                  else
+                    # it's a non-substation formatted, but recognized subtitle.
+                    # the `#send` method of SubtitleFile will lazily load the
+                    # converted version into `SubtitleFile@content` when it is
+                    # requested the first time.
+                    subs.mime_type = SubtitleFile.mime_type of: captions
+                  end
                   subs.parent = out_dir
                   FileMetadata << subs
                 end
