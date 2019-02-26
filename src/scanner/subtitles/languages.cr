@@ -196,14 +196,14 @@ enum Languages
   DefaultLocale = None
   {% for code, lang in language_data %}
   {% if lang[:name] %}# {{lang[:native_name]}} -- AKA {{ lang[:name].id }}
-  {% end %} {{ lang[:name].gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }} {% end %}
+  {% end %} constantize {{ lang[:name] }} #.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }} {% end %}
   # The default locale/None enum value means to use the system locale.
 
   def language_code
     {% begin %}
     case self
     {% for code, lang in language_data %}
-    when {{ lang[:name].gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
+    when constantize {{ lang[:name] }} #.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
       "{{code.id}}" {% end %}
     when DefaultLocale then DEFAULT_LOCALE_STRING
     else raise "invalid enum variant #{self.inspect}"
@@ -215,7 +215,7 @@ enum Languages
     {% begin %}
     case code
     {% for code, lang in language_data %}
-    when code then {{ lang[:name].gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
+    when code then constantize {{ lang[:name] }} #.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
     {% end %}
     else DefaultLocale
     end
@@ -226,10 +226,10 @@ enum Languages
     DefaultLocale
   end
   {% end %}
-  #
-  # private macro constantize(stringliteral)
-  #   {{stringliteral.split(' ').map(&.capitalize.gsub /\(.+\)/, "" ).join("").split('-').map(&.capitalize).join("").id}}
-  # end
+
+  private macro constantize(stringliteral)
+    {{stringliteral.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
+  end
 
 end
 
