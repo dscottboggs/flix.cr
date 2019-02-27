@@ -11,14 +11,18 @@ TEST_DATA_DIR   = File.join Dir.current, "test_data"
 TEST_MEDIA_DIR  = File.join TEST_DATA_DIR, "media"
 TEST_CONFIG_DIR = File.join TEST_DATA_DIR, "config"
 
-VIDEO_ONE_PATH = File.join(TEST_MEDIA_DIR, "TestVideo.mp4")
-VIDEO_TWO_PATH = File.join(TEST_MEDIA_DIR, "Test.Video.-.2.mp4")
-IMAGE_ONE_PATH = File.join(TEST_MEDIA_DIR, "TestVideo.jpg")
+VIDEO_ONE_PATH    = File.join(TEST_MEDIA_DIR, "TestVideo.mp4")
+VIDEO_TWO_PATH    = File.join(TEST_MEDIA_DIR, "Test.Video.-.2.mp4")
+IMAGE_ONE_PATH    = File.join(TEST_MEDIA_DIR, "TestVideo.jpg")
+SUBTITLE_SSA_PATH = File.join(TEST_MEDIA_DIR, "TestVideo.en.ssa")
+SUBTITLE_SRT_PATH = File.join(TEST_MEDIA_DIR, "TestVideo.es.srt")
 
 TEST_FILES = {
-  video_one: File.open(VIDEO_ONE_PATH).tap &.close,
-  video_two: File.open(VIDEO_TWO_PATH).tap &.close,
-  image_one: File.open(IMAGE_ONE_PATH).tap &.close,
+  video_one:         File.open(VIDEO_ONE_PATH).tap &.close,
+  video_two:         File.open(VIDEO_TWO_PATH).tap &.close,
+  image_one:         File.open(IMAGE_ONE_PATH).tap &.close,
+  english_subtitles: File.open(SUBTITLE_SSA_PATH).tap &.close,
+  spanish_subtitles: File.open(SUBTITLE_SRT_PATH).tap &.close,
 }
 
 Flix.config = Flix::Configuration.new config_location: TEST_CONFIG_DIR, dirs: [TEST_MEDIA_DIR]

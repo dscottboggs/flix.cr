@@ -89,7 +89,6 @@ module Flix
     # `$PWD/../flix_webui/build/`.
     property webroot : String = Defaults.webroot
     @logger : Logger?
-    @initialized_dirs : Array(Scanner::MediaDirectory)
 
     # Setting this higher than 1 sets Kemal to "reuse_port", and causes the given
     # number of forks before starting Kemal, effectively allowing multiprocess
@@ -126,12 +125,13 @@ module Flix
       key_file && cert_file
     end
 
+    getter dirs : RootDirectory
+
     def initialize(@config_location : String = Defaults.config_location,
-                   @dirs = Defaults.media_dirs)
+                   dirs = Defaults.media_dirs)
       check_config_dir
       @processes = processes.to_i
-      @initialized_dirs = Array(Scanner::MediaDirectory).new
-      scan_dirs
+      @dirs = RootDirectory.new paths: dirs
     end
 
     # The file where authentication tokens are stored
@@ -154,25 +154,13 @@ module Flix
       @logger ||= Logger.new io: log_file, level: log_level
     end
 
-    # The scanned and initialized root Scanner::MediaDirectory.
-    def dirs : Array(Scanner::MediaDirectory)
-      @initialized_dirs
-    end
-
-    # An array of paths to valid directories that contain valid media files.
-    # Currently supported media types are defined by the Flix::Scanner::MimeType
-    # enum.
-    def dirs=(@dirs : Array(String))
-      @initialized_dirs = Array(Scanner::MediaDirectory).new
-      scan_dirs
-    end
-
     {% if env("KEMAL_ENV") == "test" %}
     # When specs are run, they MUST be run with the $KEMAL_ENV environment
     # variable set to "test". So, lets take advantage of that to compile some
     # convenience methods for testing.
 
-    def dirs=(@initialized_dirs : Array(Scanner::MediaDirectory))
+    def dirs=(initialized dirs : Array(Scanner::MediaDirectory))
+      @dirs = RootDirectory.new initialized: dirs
     end
 
     def testing?
@@ -190,29 +178,15 @@ module Flix
     @testing_metadata_file : IO::Memory?
     @metadata_file : IO?
 
-    def metadata_file(mode = "r", &block : IO -> _)
+    def metadata_file(mode = "r", &block : IO -> R) : R forall R
       if testing?
         yield @testing_metadata_file ||= IO::Memory.new
       else
-        File.open(
-          File.join(
-            config_location, "metadata.yaml"
-          ),
-          mode: mode
-        ) { |file| yield file }
-      end
-    end
-
-    setter testing : Bool?
-
-    private def scan_dirs
-      @dirs.each do |dirpath|
-        if (dir = Scanner::FileMetadata.from_file_path? dirpath) && dir.is_dir?
-          @initialized_dirs << dir.as Scanner::MediaDirectory
+        config_file = File.join config_location, "metadata.yaml"
+        File.open config_file, mode: mode do |file|
+          yield file
         end
       end
-      @initialized_dirs.reject! &.nil?
-      Flix::Scanner::FileMetadata.associate_thumbnails
     end
 
     private def check_config_dir

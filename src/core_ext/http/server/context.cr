@@ -39,6 +39,5 @@ class HTTP::Server
     private def accepts?(*, encoding : String)
       request.headers.includes_word? "Accept-Encoding", encoding
     end
-
   end
 end

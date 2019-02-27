@@ -37,7 +37,7 @@ enum Flix::Scanner::MimeType
     when SubStationSubtitles          then "text/x-substation"
     when JSONSubtitles                then "application/json"
     when Streamable, OctetStream      then "application/octet-stream"
-    else raise "got invalid variant: #{self.inspect}"
+    else                                   raise "got invalid variant: #{self.inspect}"
     end
   end
 

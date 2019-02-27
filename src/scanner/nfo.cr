@@ -13,9 +13,16 @@ module Flix::Scanner
     property file_name : String
 
     @[JSON::Field(key: "ParentDir")]
-    property parent_dir : String
+    property parent_dir : String?
 
-    def initialize(@mime_type : String?, @file_name, @parent_dir); end
+    @[JSON::Field(key: "Subtitles")]
+    property subtitles : Hash(String, String)?
+
+    def initialize(@mime_type : String?,
+                   @file_name,
+                   @parent_dir = nil,
+                   @subtitles = {} of String => String)
+    end
   end
 
   abstract class FileMetadata
@@ -26,15 +33,21 @@ module Flix::Scanner
         _filename,
         if rent = parent
           Scanner.hash rent.path
-        else
-          ""
         end
     end
   end
 
   class MediaDirectory < FileMetadata
     def nfo
-      NFO.new "inode/directory", _filename, ""
+      NFO.new "inode/directory", _filename
+    end
+  end
+
+  class VideoFile < FileMetadata
+    def nfo
+      NFO.new textual_mime_type, _filename, parent.try(&.hash), unless subtitles.empty?
+        subtitles.map { |lang, subs| {lang.language_code, subs.hash} }.to_h
+      end
     end
   end
 end

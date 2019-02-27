@@ -21,8 +21,11 @@ describe Flix::MetadataConfig do
           #{Flix::Scanner.hash TEST_FILES[:video_two].path}:
             title: Test Video - 2
           #{Flix::Scanner.hash TEST_FILES[:video_one].path}:
-            title: Test Video
             thumbnail: #{TEST_FILES[:image_one].path}
+            title: Test Video
+            subtitles:
+              en: /home/scott/Documents/code/flix/test_data/media/TestVideo.en.ssa
+              es: /home/scott/Documents/code/flix/test_data/media/TestVideo.es.srt
 
     YAML
     end
@@ -58,8 +61,7 @@ describe Flix::MetadataConfig do
     Flix.config
       .dirs
       .first
-      .children
-      .find { |_, child| child.name === "Updated title!" }
+      .find_video { |video| video.name === "Updated title!" }
       .should_not be_nil
     Flix.config.metadata_file do |mf|
       if mf.is_a? IO::Memory
@@ -76,8 +78,7 @@ describe Flix::MetadataConfig do
     Flix.config
       .dirs
       .first
-      .children
-      .find { |_, child| child.name === "Updated title!" }
+      .find_video { |video| video.name === "Updated title!" }
       .should be_nil
   ensure
     reset_metadata_file

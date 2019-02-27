@@ -3,6 +3,7 @@
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
 require "yaml"
 require "../scanner/metadata"
+require "./root_directory"
 
 module Flix
   module MetadataConfig
@@ -12,11 +13,11 @@ module Flix
 
       # other stuff besides the folders can go here but we don't have anything
       # else for now.
-      property folders : Hash( String, Scanner::MediaDirectory::ConfigData )
+      property folders : Hash(String, Scanner::MediaDirectory::ConfigData)
 
       # This constructor accepts the Flix.config.dirs array and turns it into a
       # a mapping appropriate for serialization to the config file.
-      def initialize(dirs : Array(Scanner::FileMetadata))
+      def initialize(dirs : Configuration::RootDirectory)
         @folders = dirs.map { |dir| {dir.hash, dir.config_data} }.to_h
       end
     end

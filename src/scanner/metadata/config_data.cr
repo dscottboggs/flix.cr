@@ -6,5 +6,5 @@ require "../*"
 
 # A convenience structure for converting to YAML.
 abstract class Flix::Scanner::FileMetadata
-  alias ConfigData = Union( VideoFile::ConfigData, PhotoFile::ConfigData, MediaDirectory::ConfigData, SubtitleFile::ConfigData )
+  alias ConfigData = Union(VideoFile::ConfigData, PhotoFile::ConfigData, MediaDirectory::ConfigData, SubtitleFile::ConfigData)
 end

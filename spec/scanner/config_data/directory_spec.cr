@@ -5,8 +5,8 @@ describe Flix::Scanner::MediaDirectory::ConfigData do
     subject = Flix::Scanner::MediaDirectory.from_file_path?(TEST_MEDIA_DIR).as Flix::Scanner::MediaDirectory
     cd = subject.config_data
     subject.name.should eq cd.title
-    subject.children.keys.should eq cd.content.keys
-    subject.children.values.map(&.name).should eq cd.content.values.map &.title
+    subject.children_videos.map(&.hash).should eq cd.content.keys
+    subject.children_videos.map(&.name).should eq cd.content.values.map &.title
   end
   it "matches the stored snapshot" do
     subject = Flix::Scanner::MediaDirectory.from_file_path?(TEST_MEDIA_DIR).as Flix::Scanner::MediaDirectory
@@ -17,7 +17,11 @@ describe Flix::Scanner::MediaDirectory::ConfigData do
       #{Flix::Scanner.hash VIDEO_TWO_PATH}:
         title: Test Video - 2
       #{Flix::Scanner.hash VIDEO_ONE_PATH}:
+        thumbnail: #{IMAGE_ONE_PATH}
         title: Test Video
+        subtitles:
+          en: /home/scott/Documents/code/flix/test_data/media/TestVideo.en.ssa
+          es: /home/scott/Documents/code/flix/test_data/media/TestVideo.es.srt
 
     YAML
   end

@@ -4,18 +4,22 @@
 module Flix
   module Scanner
     class VideoFile < FileMetadata
-      property subtitles : SubtitleFile?
+      property subtitles : Hash(Languages, SubtitleFile) do
+        {} of Languages => SubtitleFile
+      end
 
       class ConfigData
         include YAML::Serializable
         property thumbnail : String?
         property title : String
-        property subtitles : String?
+        property subtitles : Hash(String, String)?
 
         def initialize(from video : VideoFile)
           @title = video.name
           @thumbnail = video.thumbnail.try &.path
-          @subtitles = video.subtitles.try &.path
+          @subtitles = video.subtitles.map do |lang, sub|
+            {lang.language_code, sub.path}
+          end.to_h unless video.subtitles.empty?
         end
       end
 
@@ -35,7 +39,9 @@ module Flix
           @thumbnail = PhotoFile.from_file_path?(thumb).as PhotoFile?
         end
         if subs = config.subtitles
-          @subtitles = SubtitleFile.from_file_path?(subs).as SubtitleFile?
+          subs.each do |lc, fp|
+            subtitles[Languages.from_language_code lc] = SubtitleFile.from_file_path?(fp).as SubtitleFile
+          end
         end
         self
       end

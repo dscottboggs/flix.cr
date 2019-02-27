@@ -4,9 +4,7 @@ enum Languages
   {% begin %}
   # :nodoc:
   #
-  # This contains the data used to build up the Enum. However, since we want
-  # type safety, this data should never be accessed at runtime, instead using
-  # methods on the Languages enum to ensure that a valid variant is received.
+  # This contains the data used to build up the Enum.
   {%
     language_data = {
       ab: {name: "Abkhaz", native_name: "аҧсуа"},
@@ -190,47 +188,49 @@ enum Languages
       xh: {name: "Xhosa", native_name: "isiXhosa"},
       yi: {name: "Yiddish", native_name: "ייִדיש"},
       yo: {name: "Yoruba", native_name: "Yorùbá"},
-      za: {name: "Zhuang, Chuang", native_name: "Saɯ cueŋƅ"}}
+      za: {name: "Zhuang, Chuang", native_name: "Saɯ cueŋƅ"},
+    }
   %}
   None = 0
   DefaultLocale = None
   {% for code, lang in language_data %}
   {% if lang[:name] %}# {{lang[:native_name]}} -- AKA {{ lang[:name].id }}
-  {% end %} constantize {{ lang[:name] }} #.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }} {% end %}
+  {% end %} {{ lang[:name].gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }} {% end %}
   # The default locale/None enum value means to use the system locale.
 
+  # The associated ISO 639-1 code for this `Languages` variant.
   def language_code
     {% begin %}
     case self
     {% for code, lang in language_data %}
-    when constantize {{ lang[:name] }} #.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
-      "{{code.id}}" {% end %}
+    when constantize {{ lang[:name] }} then "{{code.id}}" {% end %}
     when DefaultLocale then DEFAULT_LOCALE_STRING
     else raise "invalid enum variant #{self.inspect}"
     end
     {% end %}
   end
 
+  # Retrieve a `Languages` from its associated ISO 639-1 code
   def self.from_language_code(code : String)
     {% begin %}
     case code
     {% for code, lang in language_data %}
-    when code then constantize {{ lang[:name] }} #.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
+    when "{{code.id}}" then constantize {{ lang[:name] }}
     {% end %}
     else DefaultLocale
     end
     {% end %}
   end
 
+  # :ditto:
   def self.from_language_code(null_value : Nil)
     DefaultLocale
   end
   {% end %}
 
   private macro constantize(stringliteral)
-    {{stringliteral.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id }}
+    {{stringliteral.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id}}
   end
-
 end
 
 # Checks the environment variables $LANG, $LANGUAGE, $LC_ALL, and $LC_NAME for
@@ -242,9 +242,9 @@ end
 # if the environment variables are not set, we have no other way of gathering
 # this information. If you know of any additional sources by which we could
 # check for the ISO 639-1 code, please open an issue or PR.
-DEFAULT_LOCALE_STRING = ( ENV["LANG"]? ||
-                          ENV["LANGUAGE"]? ||
-                          ENV["LC_ALL"]? ||
-                          ENV["LC_NAME"]? ||
-                          "en"
-                        )[0..1]
+DEFAULT_LOCALE_STRING = (ENV["LANG"]? ||
+                         ENV["LANGUAGE"]? ||
+                         ENV["LC_ALL"]? ||
+                         ENV["LC_NAME"]? ||
+                         "en"
+  )[0..1]
