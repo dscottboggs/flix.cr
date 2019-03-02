@@ -18,14 +18,10 @@ module Flix::Scanner
     # not actually used
     class ConfigData
       include YAML::Serializable
+      property thumbnail : String?
       property title : String
-
-      def initialize(from file : FileMetadata)
+      def initialize(from file : SubtitleFile)
         @title = file.name
-      end
-
-      def thumbnail
-        nil
       end
     end
 
@@ -107,10 +103,8 @@ module Flix::Scanner
       the_clone
     end
 
-    # :nodoc:
-    # not actually used
     def config_data
-      SubtitleFile::ConfigData.new self
+      ConfigData.new from: self
     end
   end
 end

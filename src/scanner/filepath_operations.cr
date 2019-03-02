@@ -114,14 +114,26 @@ module Flix::Scanner::FilepathOperations
     end
   end
 
+  # The result of calling `self.extension(filename)`
+  #
+  # Don't call this from the module, include it in a class that inherits from
+  # FileMetadata.
   def extension
-    extension of_this: _filename
+    extension of_this: filename
   end
 
+  # The result of calling `self.without_extension(filename)`
+  #
+  # Don't call this from the module, include it in a class that inherits from
+  # FileMetadata.
   def without_extension
-    without_extension _filename
+    without_extension filename
   end
 
+  # show the name, path, and ID properties of the object this is included on.
+  #
+  # Don't call this from the module, include it in a class that inherits from
+  # FileMetadata.
   def to_s
     %{<"#{name}"@#{path}$#{hash}>}
   end

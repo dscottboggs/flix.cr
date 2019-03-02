@@ -5,16 +5,14 @@ require "yaml"
 
 module Flix::Scanner
   class PhotoFile < FileMetadata
+    # :nodoc:
+    # not actually used
     class ConfigData
       include YAML::Serializable
       property title : String
-
-      def initialize(from file : FileMetadata)
+      property thumbnail : String?
+      def initialize(from file : PhotoFile)
         @title = file.name
-      end
-
-      def thumbnail
-        nil
       end
     end
 

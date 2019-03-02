@@ -30,7 +30,7 @@ module Flix::Scanner
     # the file this object represents.
     def nfo
       NFO.new textual_mime_type,
-        _filename,
+        filename,
         if rent = parent
           Scanner.hash rent.path
         end
@@ -38,14 +38,18 @@ module Flix::Scanner
   end
 
   class MediaDirectory < FileMetadata
+    # returns a new Flix::Scanner::NFO filled out with the appropriate data for
+    # the file this object represents.
     def nfo
-      NFO.new "inode/directory", _filename
+      NFO.new "inode/directory", filename
     end
   end
 
   class VideoFile < FileMetadata
+    # returns a new Flix::Scanner::NFO filled out with the appropriate data for
+    # the file this object represents.
     def nfo
-      NFO.new textual_mime_type, _filename, parent.try(&.hash), unless subtitles.empty?
+      NFO.new textual_mime_type, filename, parent.try(&.hash), unless subtitles.empty?
         subtitles.map { |lang, subs| {lang.language_code, subs.hash} }.to_h
       end
     end

@@ -1,5 +1,5 @@
 # An enumeration of all valid languages and their associated codes.
-# Source: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+# Source: https://en.wikipedia.org/wiki/List_of_ISO_639-
 enum Languages
   {% begin %}
   # :nodoc:
@@ -199,37 +199,53 @@ enum Languages
   # The default locale/None enum value means to use the system locale.
 
   # The associated ISO 639-1 code for this `Languages` variant.
-  def language_code
+  def language_code : String
     {% begin %}
     case self
     {% for code, lang in language_data %}
     when constantize {{ lang[:name] }} then "{{code.id}}" {% end %}
     when DefaultLocale then DEFAULT_LOCALE_STRING
-    else raise "invalid enum variant #{self.inspect}"
+    else
+      Flix.logger.error "\
+        invalid enum variant #{self.inspect} requested, using \
+        default #{DEFAULT_LOCALE_STRING.inspect} instead"
+      DEFAULT_LOCALE_STRING
     end
     {% end %}
   end
 
   # Retrieve a `Languages` from its associated ISO 639-1 code
-  def self.from_language_code(code : String)
+  def self.from_language_code?(code : String, default = DefaultLocale) : self
     {% begin %}
     case code
     {% for code, lang in language_data %}
-    when "{{code.id}}" then constantize {{ lang[:name] }}
+      when "{{code.id}}" then constantize {{ lang[:name] }}
     {% end %}
-    else DefaultLocale
+    else default
     end
     {% end %}
   end
 
   # :ditto:
-  def self.from_language_code(null_value : Nil)
-    DefaultLocale
+  def self.from_language_code?(null_value : Nil, default = DefaultLocale) : self
+    default
+  end
+
+  def self.from_language_code(code) : self
+    from_language_code? code || raise InvalidLanguageCode.new code
   end
   {% end %}
 
   private macro constantize(stringliteral)
     {{stringliteral.gsub(/\(.+\)/, "").gsub(/[\s-;,]/, " ").split(' ').map(&.capitalize).join("").id}}
+  end
+end
+
+# An exception which is raised when an invalid language code is attempted to be
+# used to get a Languages variant.
+class InvalidLanguageCode < Exception
+  def initialize(language_code)
+    super "the given language code (#{language_code.inspect}) has no associated Languages variant."
   end
 end
 
@@ -246,5 +262,4 @@ DEFAULT_LOCALE_STRING = (ENV["LANG"]? ||
                          ENV["LANGUAGE"]? ||
                          ENV["LC_ALL"]? ||
                          ENV["LC_NAME"]? ||
-                         "en"
-  )[0..1]
+                         "en")[0..1]

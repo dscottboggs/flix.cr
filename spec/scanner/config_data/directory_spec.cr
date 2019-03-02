@@ -20,8 +20,8 @@ describe Flix::Scanner::MediaDirectory::ConfigData do
         thumbnail: #{IMAGE_ONE_PATH}
         title: Test Video
         subtitles:
-          en: /home/scott/Documents/code/flix/test_data/media/TestVideo.en.ssa
           es: /home/scott/Documents/code/flix/test_data/media/TestVideo.es.srt
+          en: /home/scott/Documents/code/flix/test_data/media/TestVideo.en.ssa
 
     YAML
   end

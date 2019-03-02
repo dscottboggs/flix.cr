@@ -9,9 +9,9 @@ module Flix::RouteHelpers
       return
     end
     if video = Flix.config.dirs[video: id]?
-      video.nfo.to_json
+      context.response.puts video.nfo.to_json
     elsif photo = Flix.config.dirs[photo: id]?
-      photo.nfo.to_json
+      context.response.puts photo.nfo.to_json
     else
       page_not_found
     end
@@ -70,16 +70,23 @@ module Flix::RouteHelpers
            else
              Languages::DefaultLocale
            end
-    Flix.logger.debug "got request for subtitles with ID #{id}"
-    if subs = Flix.config.dirs[subtitle: id] ||
-              Flix.config.dirs[video: id].try &.subtitles[lang]?
+    Flix.logger.debug "got request for subtitles with ID #{id.inspect} and language #{lang.inspect}"
+    if subs = Flix.config.dirs[subtitle: id]? || video_for(id, lang)
       # some relevant subtitles were found either by ID or by their associated
       # video's ID
+      Flix.logger.debug "found subtitles in #{subs.language} at #{subs.path}"
       subs.send to: context do
         page_not_found
       end
     else
       page_not_found
+    end
+  end
+
+  private def video_for(id : String, language : Languages) : Scanner::SubtitleFile?
+    if vid = Flix.config.dirs[video: id]?
+      Flix.logger.debug "found video #{vid.inspect} looking for #{language.inspect} subtitles"
+      vid.subtitles[language]?
     end
   end
 

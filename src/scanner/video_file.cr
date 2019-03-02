@@ -1,13 +1,16 @@
 # Flix -- A media server in the Crystal Language with Kemal.cr
 # Copyright (C) 2018 D. Scott Boggs
 # See LICENSE.md for the terms of the AGPL under which this software can be used.
+require "./subtitles/mapping"
+
 module Flix
   module Scanner
     class VideoFile < FileMetadata
-      property subtitles : Hash(Languages, SubtitleFile) do
-        {} of Languages => SubtitleFile
+      property subtitles : SubtitleFile::Mapping do
+        SubtitleFile::Mapping.new
       end
 
+      # The metadata about a directory formatted to be stored in a YAML file.
       class ConfigData
         include YAML::Serializable
         property thumbnail : String?
@@ -29,10 +32,13 @@ module Flix
         _clone_
       end
 
-      def config_data
+      # The metadata about this directory formatted to be stored in a YAML file.
+      property config_data do
         ConfigData.new from: self
       end
 
+      # Merge data from a config file into the already stored or detected
+      # metadata.
       def merge!(with config : ConfigData) : self
         super
         if thumb = config.thumbnail
@@ -42,6 +48,15 @@ module Flix
           subs.each do |lc, fp|
             subtitles[Languages.from_language_code lc] = SubtitleFile.from_file_path?(fp).as SubtitleFile
           end
+        end
+        self
+      end
+
+      # Store all the subtitles in the given directory in the subtitles mapping
+      # in this class.
+      def using_all_subtitles_in(dir : MediaDirectory)
+        dir.each_subtitle do |_, subs|
+          subtitles[subs.language] = subs
         end
         self
       end

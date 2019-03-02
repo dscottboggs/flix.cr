@@ -46,7 +46,9 @@ module Flix
         @stat = File.info path
       end
 
-      def _filename
+      # `File.basename(path)`
+      @[AlwaysInline]
+      def filename
         File.basename path
       end
 
@@ -63,6 +65,13 @@ module Flix
         mime_type.try &.to_s
       end
 
+      # Detect the filetype of the given file, and store it as a class which
+      # implements FileMetadata.
+      #
+      # This method is basically the heart of the Scanner module. It recursively
+      # searches the root directories, associating all files underneath each
+      # directory with its parent, indexing them by the MD5 hash of their
+      # absolute filepath for later reference.
       def self.from_file_path?(filepath : String, stat : Crystal::System::FileInfo? = nil) : FileMetadata?
         if info = File.info? filepath # skip everything if the file is not valid
           if info.file? && (mime_type = MimeType.of filepath)
@@ -74,8 +83,8 @@ module Flix
               return PhotoFile.new path: filepath, stat: info
             elsif mime_type.could_be_subtitles?
               # We got a plain-text file which might contain subtitles
-              if subs_class = Subtitles.detect(file: filepath)
-                subs = SubtitleFile.new(path: filepath)
+              if subs_class = Subtitles.detect file: filepath
+                subs = SubtitleFile.new path: filepath
                 subs.mime_type = SubtitleFile.mime_type of: subs_class
                 return subs
               end
@@ -84,35 +93,28 @@ module Flix
               return
             end
           end
-          videos_in_this_dir : UInt64 = 0
-          photos_in_this_dir : UInt64 = 0
-          children_dir_count : UInt64 = 0
-          subtitles_in_this_dir : UInt64 = 0
+          # We have a directory...
           out_dir = MediaDirectory.new path: filepath, stat: info
-
-          # time to figure out what all the children files are in this directory
-          Dir.open filepath, &.each_child do |file|
+          # ...so it's time to recursively check-out all the files in this
+          # directory.
+          Dir.each_child dirname: filepath do |file|
             fullpath = File.join filepath, file
             info = File.info fullpath
 
             if new_file = from_file_path? fullpath
               case new_file.mime_type
-              when nil then nil
-              when .is_a_dir?
-                out_dir << new_file.as MediaDirectory
-              when .is_a_photo?
-                out_dir << new_file.as PhotoFile
-              when .is_a_video?
-                out_dir << new_file.as VideoFile
-              when .is_a_subtitle?
-                out_dir << new_file.as SubtitleFile
+              when nil then nil # ignore invalid files
+              when .is_a_dir? then out_dir << new_file.as MediaDirectory
+              when .is_a_photo? then out_dir << new_file.as PhotoFile
+              when .is_a_video? then out_dir << new_file.as VideoFile
+              when .is_a_subtitle? then out_dir << new_file.as SubtitleFile
               end
             end
           end
 
           return out_dir.which_has_only_subtitles! if out_dir.has_only_subtitles?
           # returns the first video in out_dir's children if out_dir only has one child video.
-          return out_dir.first_video if out_dir.size == 1
+          return out_dir.first_video.using_all_subtitles_in(out_dir) if out_dir.size == 1
           out_dir.associate_subtitles!
           out_dir.associate_thumbnails!
           out_dir

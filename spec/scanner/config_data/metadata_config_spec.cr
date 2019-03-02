@@ -24,8 +24,8 @@ describe Flix::MetadataConfig do
             thumbnail: #{TEST_FILES[:image_one].path}
             title: Test Video
             subtitles:
-              en: /home/scott/Documents/code/flix/test_data/media/TestVideo.en.ssa
               es: /home/scott/Documents/code/flix/test_data/media/TestVideo.es.srt
+              en: /home/scott/Documents/code/flix/test_data/media/TestVideo.en.ssa
 
     YAML
     end

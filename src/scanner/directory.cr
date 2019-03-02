@@ -19,25 +19,40 @@ module Flix
 
       {% for t in [:video, :subtitle, :photo] %}
 
+      # All {{t.id}}s in *this* directory, but **not** in any subdirectories.
       getter children_{{t.id}}s = [] of {{t.id.capitalize}}File
 
+      # Overwrite the existing internal list of `{{t.capitalize.id}}File`s in
+      # this dir
       def children_{{t.id}}s=(other : Array({{t.id.capitalize}}File))
+        @json_cache = nil
         @children_{{t.id}}s = other
       end
 
+      # Find a {{t.id}} in this directory or one of its sub-directories. This
+      # *requires* the use of a named argument like so:
+      # ```
+      # def find_{{t.id}}_by_id_in(directory : MediaDirectory, file_id : String)
+      #   directory[{{t.id}}: file_id]?
+      # end
+      # ```
       def []?(*, {{t.id}} id : String) : {{t.capitalize.id}}File?
         if found = @children_{{t.id}}s.find { |child| child.hash == id }
           return found
         end
         each_child_directory do |_, dir|
-          if found = dir[{{t.id}}: id]
+          if found = dir[{{t.id}}: id]?
             return found
           end
         end
       end
 
+      # :ditto:
+      #
+      # Raise a KeyError if no {{t.capitalize.id}}File is found in this
+      # directory associated with the given ID/hash.
       def [](*, {{t.id}} id : String) : {{t.capitalize.id}}File
-        self[{{t.id}}: id]? || raise IndexError.new "ID #{id} not found in the {{t.id}}s"
+        self[{{t.id}}: id]? || raise KeyError.new "ID #{id.inspect} not found in the {{t.id}}s under the directory at #{path.inspect}"
       end
 
 
@@ -75,24 +90,41 @@ module Flix
       end
       {% end %}
 
-      # A directory is *directly* indexable by ID, for ANY type. There should
-      # never be a collision between IDs, but in case there is, the files are
-      # checked in this order: videos, photos, subtitles, directories. The
-      # search is recursive. If no file is found in this dir or any subdirectory
-      # matching the given ID, the response is `nil`
+      # A directory is *directly* indexable by ID, for **any** type. There
+      # should never be a collision between IDs (MD5 hashes of the filepath
+      # are used internallly to generate the IDs. As filepaths must be unique,
+      # so are the IDs), but in case there is, the files are checked in this
+      # order: videos, photos, subtitles, directories. The search is recursive.
+      # If no file is found in this dir, nor any subdirectory matching the given
+      # ID, the response is `nil`.
+      #
+      # For performance reasons, you should always use the named-argument
+      # overloads of this method.
       def []?(id : String)
         self[video: id]? || self[photo: id]? || self[subtitle: id]? || self[dir: id]?
       end
 
-      # A directory is *directly* indexable by ID, for ANY type. There should
-      # never be a collision between IDs, but in case there is, the files are
-      # checked in this order: videos, photos, subtitles, directories. The
-      # search is recursive. If no file is found in this dir or any subdirectory
-      # matching the given ID, an IndexError is raised.
+      # A directory is *directly* indexable by ID, for **any** type. There
+      # should never be a collision between IDs (MD5 hashes of the filepath
+      # are used internallly to generate the IDs. As filepaths must be unique,
+      # so are the IDs), but in case there is, the files are checked in this
+      # order: videos, photos, subtitles, directories. The search is recursive.
+      # If no file is found in this dir, nor any subdirectory matching the given
+      # ID, an KeyError is raised.
+      #
+      # For performance reasons, you should always use the named-argument
+      # overloads of this method.
       def [](id : String)
-        self[id]? || raise IndexError.new "No file was found with the ID of #{id.inspect} in #{path.inspect}"
+        self[id]? || raise KeyError.new "No file was found with the ID of #{id.inspect} in #{path.inspect}"
       end
 
+      # Find a subdirectory in this directory or one of its sub-directories.
+      # This  *requires* the use of a named argument like so:
+      # ```
+      # def find_subdir_by_id_in(directory : MediaDirectory, file_id : String)
+      #   directory[dir: file_id]?
+      # end
+      # ```
       def []?(*, dir id : String) : self?
         if found = @children_directories.find { |child| child.hash == id }
           return found
@@ -104,10 +136,16 @@ module Flix
         end
       end
 
+      # :ditto:
+      #
+      # Raise a KeyError if no MediaDirectory is found in this directory
+      # associated with the given ID/hash.
       def [](*, dir id : String)
-        self[dir: id]? || raise IndexError.new "ID #{id} not found in the {{t.id}}s"
+        self[dir: id]? || raise KeyError.new "Directory with ID #{id} not found under the #{path.inspect} directory."
       end
 
+      # Yield the pair of each child directory's ID and the associated
+      # MediaDirectory
       def each_child_directory(&action : (String, self) -> Void) : Void
         @children_directories.each do |child|
           yield child.hash, child
@@ -123,10 +161,14 @@ module Flix
 
       def clone
         _clone_ = self.class.new @path, @videos.clone, @thumbnail, @stat
-        _clone_.name = @name
+        {% for ivar in @type.instance_vars %}
+        _clone_.@{{ivar.id}} = @{{ivar.id}}  {% end %}
         _clone_
       end
 
+      # Override **all** children files in this directory with the given array
+      # of `FileMetadata`. All child videos, subtitles, photos and directories
+      # will be overwritten with the given values.
       def children=(children : Array(FileMetadata))
         @json_cache = @config_data = nil
         @children_videos = children.select(&.is_a_video?).map &.as VideoFile
@@ -198,19 +240,29 @@ module Flix
           @children_directories.empty?
       end
 
+      # Returns a new instance of `self` which is a `SubtitlesOnlyDirectory`.
       def which_has_only_subtitles! : SubtitlesOnlyDirectory
         SubtitlesOnlyDirectory.new copy_of: self
       end
 
+      # `false`
+      #
+      # Use `has_only_subtitles?` to detect whether or not this directory only
+      # has subtitles.
       def only_subtitles?
         false
       end
 
+      # Directories which are *direct* descendants of this directory which only
+      # contain subtitles (I.E they are `SubtitlesOnlyDirectory`s).
       @[AlwaysInline]
       def subtitles_child_dirs
         @children_directories.select &.only_subtitles?
       end
 
+      # Find photos in this directory which should be associated with a video
+      # that is also in this directory, and perform the associaton. Then,
+      # this is recursively called on all child subdirectories.
       def associate_thumbnails!
         each_video do |id, video|
           if photo = children_photos.find { |photo| photo.name == video.name }
@@ -222,11 +274,11 @@ module Flix
         end
       end
 
+      # Find subtitles in this directory which should be associated with a video
+      # that is also in this directory, and perform the associaton. Then,
+      # this is recursively called on all child subdirectories.
       def associate_subtitles!
-        Flix.logger.debug "\
-          associating subtitles for dir #{name.inspect}. Have subtitles \
-          :\n#{children_subtitles.map { |subs| "#{subs.name.inspect} -- #{subs.path.inspect}\n" }}\n\
-          for videos #{children_videos.map { |vid| "#{vid.name.inspect} -- #{vid.path.inspect}" }}\n"
+        pp! "Have subtitles #{children_subtitles.inspect}"
         each_video do |id, video|
           children_subtitles.select { |subs| subs.name == video.name }.each do |subs|
             video.subtitles[Languages.from_language_code subs.language_code] = subs
@@ -246,41 +298,42 @@ module Flix
 
       # ### <<<<     Configuration serialization section     >>>> #####
 
+      # The metadata about a video file formatted to be stored in a YAML file.
       class ConfigData
         include YAML::Serializable
         property title : String
         property thumbnail : String?
-        # getter content : Iterator({String, FileMetadata::ConfigData})
         getter content : Hash(String, FileMetadata::ConfigData)
 
         def initialize(from dir : MediaDirectory)
           @title = dir.name
           @thumbnail = dir.thumbnail.try &.path
           @content = dir.children_videos
-            .map { |vid|
-              {vid.hash, vid.config_data.as FileMetadata::ConfigData}
-            }
+            .map { |vid| {vid.hash, vid.config_data.as FileMetadata::ConfigData} }
             .to_h
             .merge dir.children_directories
-            .map { |d|
-              {d.hash, d.config_data.as FileMetadata::ConfigData}
-            }
+            .map { |d| {d.hash, d.config_data.as FileMetadata::ConfigData} }
             .to_h
         end
       end
 
+      # The metadata about this directory formatted to be stored in a YAML file.
       property config_data do
         ConfigData.new from: self
       end
 
+      # Merge data from a config file into the already stored or detected
+      # metadata.
       def merge!(with config : ConfigData) : self
         super
         if new_thumb = config.thumbnail
           thumbnail = PhotoFile.from_file_path? new_thumb
         end
         config.content.each do |id, metadata|
-          if child = self[id]?
-            child.merge! metadata
+          if video = self[video: id]?
+            video.merge! metadata
+          elsif dir = self[dir: id]?
+            dir.merge! metadata
           else
             Flix.logger.error "couldn't merge metadata for file with id #{id} -- not found."
           end
