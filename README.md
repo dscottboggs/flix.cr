@@ -8,7 +8,15 @@ A demo site hosting some public-domain videos is available at
 [demo.flix.tams.tech](https://demo.flix.tams.tech/index.html). The username is
 *demouser* and the password is *demopass*.
 
-![screenshot of flix](https://raw.githubusercontent.com/dscottboggs/flix.cr/SSL/Screenshot_2019-01-26__flix%20.png)
+#### Please Note:
+Development of this project is currently on hold. It appears at this stage that the server
+will need to serve the videos in a particular format for browser compatibility. As such,
+transcoding (a feature I thought I could punt until after the initial release), must be
+implemented. That means that more progress needs to be made on
+[av.cr](https://github.com/dscottboggs/av.cr) (an audio/video transcoding library) before
+this project can go on.
+
+![screenshot of flix](https://raw.githubusercontent.com/dscottboggs/flix.cr/master/Screenshot_2019-01-26__flix%20.png)
 
 ## Why flix?
 
